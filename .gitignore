@@ -1,0 +1,14 @@
+# node / next
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+.eslintcache
+# java
+backend/target/
+*.class
+# runtime data (uploads/results)
+data/
+# local env
+.env*.local
+.DS_Store
