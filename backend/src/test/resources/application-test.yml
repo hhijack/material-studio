@@ -1,0 +1,19 @@
+spring:
+  datasource:
+    # 集成测试数据库：可用 TEST_MYSQL_URL 覆盖（CI 指向 service 容器；本地可指向本机 MySQL/MariaDB）
+    url: ${TEST_MYSQL_URL:jdbc:mysql://127.0.0.1:3306/material_studio_test?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true}
+    username: ${TEST_MYSQL_USERNAME:root}
+    password: ${TEST_MYSQL_PASSWORD:root}
+  sql:
+    init:
+      mode: always
+
+task:
+  execution:
+    # 测试内同步执行，保证受理返回后即可断言终态（引擎顺序/中断由单元测试覆盖）
+    mode: sync
+
+sim:
+  material-check-ms: 30
+  simulate-generate-ms: 30
+  result-finalize-ms: 30

@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.materialstudio.mapper.TemplateMapper">
+
+    <!-- accepted_mime_types 为 JSON 列，作为字符串读出后由 service 解析 -->
+    <select id="findAll" resultType="com.example.materialstudio.mapper.TemplateMapper$TemplateRow">
+        SELECT id,
+               title,
+               category,
+               cover_url,
+               description,
+               required_image_count,
+               accepted_mime_types AS accepted_mime_types_json,
+               max_file_size_bytes,
+               sort_order
+        FROM template
+        ORDER BY sort_order, id
+    </select>
+
+    <select id="findById" resultType="com.example.materialstudio.mapper.TemplateMapper$TemplateRow">
+        SELECT id,
+               title,
+               category,
+               cover_url,
+               description,
+               required_image_count,
+               accepted_mime_types AS accepted_mime_types_json,
+               max_file_size_bytes,
+               sort_order
+        FROM template
+        WHERE id = #{id}
+    </select>
+
+    <select id="findCategories" resultType="com.example.materialstudio.model.CategoryInfo">
+        SELECT category, COUNT(*) AS template_count
+        FROM template
+        GROUP BY category
+        ORDER BY MIN(sort_order)
+    </select>
+</mapper>

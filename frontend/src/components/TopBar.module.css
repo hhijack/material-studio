@@ -1,0 +1,104 @@
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background: rgba(10, 10, 12, 0.92);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--border);
+}
+
+.inner {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 10px 20px;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  font-size: 16px;
+}
+
+.logoMark {
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  background: linear-gradient(135deg, #b5e848, #4ea9ff);
+  color: #0a0a0c;
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+}
+
+.nav {
+  display: flex;
+  gap: 4px;
+  flex: 1;
+}
+
+.nav a {
+  padding: 7px 12px;
+  border-radius: 8px;
+  color: var(--text-dim);
+}
+
+.nav a:hover {
+  color: var(--text);
+  background: var(--panel-2);
+}
+
+.nav a.active {
+  color: var(--text);
+  background: var(--panel-2);
+}
+
+.accountBtn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 12px 5px 6px;
+  border-radius: 999px;
+  background: var(--panel-2);
+  font-size: 13px;
+  color: var(--text-dim);
+}
+
+.accountBtn:hover {
+  filter: brightness(1.15);
+}
+
+.avatar {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #101204;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+}
+
+.connBar {
+  background: rgba(96, 165, 250, 0.12);
+  color: var(--info);
+  text-align: center;
+  padding: 6px 16px;
+  font-size: 12.5px;
+  border-bottom: 1px solid rgba(96, 165, 250, 0.25);
+}
+
+@media (max-width: 640px) {
+  .inner {
+    padding: 10px 14px;
+    gap: 12px;
+  }
+
+  .logoText {
+    display: none;
+  }
+}

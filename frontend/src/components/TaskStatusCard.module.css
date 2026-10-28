@@ -1,0 +1,165 @@
+.card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 180px;
+}
+
+.card[data-status="PROCESSING"] {
+  border-color: rgba(181, 232, 72, 0.35);
+}
+
+.card.failed {
+  border-color: rgba(248, 113, 113, 0.35);
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.title {
+  font-weight: 600;
+  font-size: 14px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.badge {
+  font-size: 12px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
+.badge.waiting {
+  background: rgba(250, 204, 21, 0.15);
+  color: #facc15;
+}
+
+.badge.processing {
+  background: rgba(181, 232, 72, 0.15);
+  color: var(--accent);
+}
+
+.badge.success {
+  background: rgba(74, 222, 128, 0.15);
+  color: #4ade80;
+}
+
+.badge.failed {
+  background: rgba(248, 113, 113, 0.15);
+  color: var(--danger);
+}
+
+.body {
+  flex: 1;
+  display: flex;
+  align-items: stretch;
+}
+
+.resultLink {
+  display: block;
+  width: 100%;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.result {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  background: var(--panel-2);
+}
+
+.failBox {
+  background: rgba(248, 113, 113, 0.08);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  width: 100%;
+  align-self: stretch;
+}
+
+.failStage {
+  color: var(--danger);
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.failReason {
+  color: var(--text-dim);
+  font-size: 13px;
+  word-break: break-all;
+}
+
+.progressBox {
+  width: 100%;
+  align-self: stretch;
+}
+
+.waitingText,
+.stageText {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-dim);
+  font-size: 13px;
+  margin-bottom: 10px;
+}
+
+.stageDots {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.stageDots li {
+  font-size: 12px;
+  color: var(--text-faint);
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--panel-2);
+}
+
+.stageDots li.done {
+  color: var(--accent);
+  background: rgba(181, 232, 72, 0.1);
+}
+
+.stageDots li.current {
+  color: #101204;
+  background: var(--accent);
+  font-weight: 600;
+}
+
+.spinner {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-top-color: var(--accent);
+  animation: spin 0.9s linear infinite;
+  display: inline-block;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.meta {
+  color: var(--text-faint);
+  font-size: 12px;
+}

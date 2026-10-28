@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.materialstudio.mapper.AssetMapper">
+
+    <insert id="insert">
+        INSERT INTO asset (id, user_id, template_id, original_name, stored_name, mime_type, size_bytes, created_at)
+        VALUES (#{id}, #{userId}, #{templateId}, #{originalName}, #{storedName}, #{mimeType}, #{sizeBytes}, #{createdAt})
+    </insert>
+
+    <select id="findById" resultType="com.example.materialstudio.model.Asset">
+        SELECT id, user_id, template_id, original_name, stored_name, mime_type, size_bytes, created_at
+        FROM asset
+        WHERE id = #{id}
+    </select>
+
+    <select id="findByIds" resultType="com.example.materialstudio.model.Asset">
+        SELECT id, user_id, template_id, original_name, stored_name, mime_type, size_bytes, created_at
+        FROM asset
+        WHERE id IN
+        <foreach collection="ids" item="item" open="(" separator="," close=")">#{item}</foreach>
+    </select>
+</mapper>

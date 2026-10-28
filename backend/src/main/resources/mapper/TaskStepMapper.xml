@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.materialstudio.mapper.TaskStepMapper">
+
+    <insert id="insertBatch">
+        INSERT INTO task_step (task_id, step_index, stage, status, message, started_at, finished_at)
+        VALUES
+        <foreach collection="steps" item="s" separator=",">
+            (#{taskId}, #{s.stepIndex}, #{s.stage}, #{s.status}, #{s.message}, #{s.startedAt}, #{s.finishedAt})
+        </foreach>
+    </insert>
+
+    <select id="findByTaskId" resultType="com.example.materialstudio.model.TaskStepRow">
+        SELECT id, task_id, step_index, stage, status, message, started_at, finished_at
+        FROM task_step
+        WHERE task_id = #{taskId}
+        ORDER BY step_index
+    </select>
+
+    <update id="markRunning">
+        UPDATE task_step
+        SET status      = 'RUNNING',
+            started_at  = #{startedAt},
+            message     = NULL,
+            finished_at = NULL
+        WHERE task_id = #{taskId}
+          AND stage = #{stage}
+    </update>
+
+    <update id="markPassed">
+        UPDATE task_step
+        SET status      = 'PASSED',
+            message     = #{message},
+            finished_at = #{finishedAt}
+        WHERE task_id = #{taskId}
+          AND stage = #{stage}
+    </update>
+
+    <update id="markFailed">
+        UPDATE task_step
+        SET status      = 'FAILED',
+            message     = #{message},
+            finished_at = #{finishedAt}
+        WHERE task_id = #{taskId}
+          AND stage = #{stage}
+    </update>
+</mapper>

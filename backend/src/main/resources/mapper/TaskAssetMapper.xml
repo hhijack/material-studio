@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.materialstudio.mapper.TaskAssetMapper">
+
+    <insert id="insertBatch">
+        INSERT INTO task_asset (task_id, asset_id, sort_order)
+        VALUES
+        <foreach collection="assets" item="a" index="i" separator=",">
+            (#{taskId}, #{a.id}, #{i})
+        </foreach>
+    </insert>
+
+    <select id="findAssetsByTaskId" resultType="com.example.materialstudio.model.Asset">
+        SELECT a.id, a.user_id, a.template_id, a.original_name, a.stored_name, a.mime_type, a.size_bytes, a.created_at
+        FROM task_asset ta
+                 JOIN asset a ON a.id = ta.asset_id
+        WHERE ta.task_id = #{taskId}
+        ORDER BY ta.sort_order
+    </select>
+</mapper>

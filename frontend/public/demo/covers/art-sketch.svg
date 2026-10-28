@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300" role="img" aria-label="速写画框">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="hsl(40 45% 22%)"/>
+      <stop offset="1" stop-color="hsl(65 42% 30%)"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="300" fill="url(#g)"/>
+  <rect x="120" y="70" width="160" height="180" rx="8" fill="none" stroke="hsl(110 75% 62%)" stroke-width="10"/>
+              <rect x="145" y="95" width="110" height="130" rx="4" fill="hsl(110 75% 62%)" opacity="0.5"/>
+              <path d="M155 200 L185 160 L205 185 L230 140 L250 200 Z" fill="hsl(110 75% 62%)" opacity="0.9"/>
+  <rect x="0" y="240" width="400" height="60" fill="rgba(0,0,0,0.45)"/>
+  <text x="20" y="276" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="24" font-weight="700" fill="#f2f2f4">速写画框</text>
+</svg>

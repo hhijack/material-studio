@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.materialstudio.mapper.SimConfigMapper">
+
+    <select id="find" resultType="com.example.materialstudio.model.SimConfig">
+        SELECT material_check_ms,
+               simulate_generate_ms,
+               result_finalize_ms,
+               fail_stage
+        FROM sim_config
+        WHERE id = 1
+    </select>
+
+    <insert id="upsert">
+        INSERT INTO sim_config (id, material_check_ms, simulate_generate_ms, result_finalize_ms, fail_stage, updated_at)
+        VALUES (1, #{materialCheckMs}, #{simulateGenerateMs}, #{resultFinalizeMs}, #{failStage}, #{updatedAt})
+        ON DUPLICATE KEY UPDATE material_check_ms   = VALUES(material_check_ms),
+                                simulate_generate_ms = VALUES(simulate_generate_ms),
+                                result_finalize_ms   = VALUES(result_finalize_ms),
+                                fail_stage           = VALUES(fail_stage),
+                                updated_at           = VALUES(updated_at)
+    </insert>
+</mapper>

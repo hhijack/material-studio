@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.materialstudio.mapper.TaskMapper">
+
+    <insert id="insert">
+        INSERT INTO task (id, user_id, template_id, status, current_stage,
+                          fail_stage, fail_reason, result_url, created_at, started_at, finished_at)
+        VALUES (#{id}, #{userId}, #{templateId}, #{status}, #{currentStage},
+                #{failStage}, #{failReason}, #{resultUrl}, #{createdAt}, #{startedAt}, #{finishedAt})
+    </insert>
+
+    <select id="findById" resultType="com.example.materialstudio.model.Task">
+        SELECT id, user_id, template_id, status, current_stage,
+               fail_stage, fail_reason, result_url, created_at, started_at, finished_at
+        FROM task
+        WHERE id = #{id}
+    </select>
+
+    <select id="findListByUser" resultType="com.example.materialstudio.model.TaskListItem">
+        SELECT t.id,
+               t.template_id,
+               tpl.title            AS template_title,
+               tpl.cover_url        AS template_cover_url,
+               t.status,
+               t.current_stage,
+               t.fail_stage,
+               t.fail_reason,
+               t.result_url,
+               t.created_at,
+               t.started_at,
+               t.finished_at
+        FROM task t
+                 JOIN template tpl ON tpl.id = t.template_id
+        WHERE t.user_id = #{userId}
+        ORDER BY t.created_at DESC, t.id DESC
+    </select>
+
+    <update id="markProcessing">
+        UPDATE task
+        SET status     = 'PROCESSING',
+            started_at = #{startedAt}
+        WHERE id = #{id}
+    </update>
+
+    <update id="setCurrentStage">
+        UPDATE task
+        SET current_stage = #{stage}
+        WHERE id = #{id}
+    </update>
+
+    <update id="markSuccess">
+        UPDATE task
+        SET status      = 'SUCCESS',
+            result_url  = #{resultUrl},
+            fail_stage  = NULL,
+            fail_reason = NULL,
+            finished_at = #{finishedAt}
+        WHERE id = #{id}
+    </update>
+
+    <update id="markFailed">
+        UPDATE task
+        SET status      = 'FAILED',
+            fail_stage  = #{failStage},
+            fail_reason = #{failReason},
+            result_url  = NULL,
+            finished_at = #{finishedAt}
+        WHERE id = #{id}
+    </update>
+</mapper>

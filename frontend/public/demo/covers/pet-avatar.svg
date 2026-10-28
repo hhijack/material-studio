@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300" role="img" aria-label="宠物卡通头像">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="hsl(120 45% 22%)"/>
+      <stop offset="1" stop-color="hsl(145 42% 30%)"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="300" fill="url(#g)"/>
+  <ellipse cx="200" cy="180" rx="52" ry="44" fill="hsl(190 75% 62%)" opacity="0.9"/>
+              <circle cx="150" cy="120" r="17" fill="hsl(190 75% 62%)" opacity="0.8"/>
+              <circle cx="185" cy="100" r="17" fill="hsl(190 75% 62%)" opacity="0.8"/>
+              <circle cx="222" cy="102" r="17" fill="hsl(190 75% 62%)" opacity="0.8"/>
+              <circle cx="252" cy="126" r="16" fill="hsl(190 75% 62%)" opacity="0.8"/>
+  <rect x="0" y="240" width="400" height="60" fill="rgba(0,0,0,0.45)"/>
+  <text x="20" y="276" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="24" font-weight="700" fill="#f2f2f4">宠物卡通头像</text>
+</svg>
