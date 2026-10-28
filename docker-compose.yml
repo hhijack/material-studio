@@ -22,7 +22,9 @@ services:
 
   backend:
     build:
-      context: ./backend
+      # 仓库根作为上下文：backend 构建需要根目录 db/init（SQL 单一来源，见 backend/Dockerfile 说明）
+      context: .
+      dockerfile: backend/Dockerfile
     container_name: ms-backend
     environment:
       MYSQL_URL: jdbc:mysql://mysql:3306/material_studio?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true

@@ -101,3 +101,19 @@
   2. 运行期**不设任何环境变量**：`PORT=3101 node .next/standalone/server.js` + 假后端 8099 → `/api/health` → **HTTP 200 `{"from":"dummy-8099","ok":true}`** ✅
   3. `npm run build`（无注入）复建干净产物，烘焙回默认 127.0.0.1:8080（本地 dev/npm start 正确）✅
 - 结论：✅ P0 已修复并验证构建期注入机制；compose 编排本身仍属未实跑范畴（04-I-1 更新），但「前端容器连不上后端」这一确定性缺陷已消除。
+
+## V-011 对抗性审查：backend 容器缺 SQL 的 P0 缺陷发现与修复（2026-10-29 02:30）
+- 背景：延续 V-010 的攻击思路，检查 backend Docker 构建：pom 的 copy-db-init 引用 `${project.basedir}/../db/init`，而 compose 的 backend 构建上下文是 `./backend` —— 上级目录**不在构建上下文内**。
+- 发现（命令/预期/实际）：
+  1. `mv db/init /tmp/… && mvn -q clean process-resources` → **exit=0 且 target/classes/db/init 不存在**：maven-resources 插件对缺失目录**静默跳过**，不报错
+  2. 推论：容器内 `mvn package` 产出的 jar 不含 db/init SQL → Spring `sql.init.mode=always` 指向缺失的 classpath 资源 → **backend 容器启动即失败**
+- 修复：
+  1. pom 新增属性 `dbinit.dir`（默认 `${project.basedir}/../db/init`，本地与 CI 行为不变），copy-db-init 改用 `${dbinit.dir}`
+  2. `backend/Dockerfile` 改为**仓库根构建上下文**：`COPY backend/pom.xml`、`COPY backend/src`、`COPY db/init /build/db-init`、`mvn package -Ddbinit.dir=/build/db-init`
+  3. `docker-compose.yml` backend 改 `context: .` + `dockerfile: backend/Dockerfile`；新增根 `.dockerignore`（排除 .git/node_modules/.next/target/backend/data/*.zip）瘦身上下文
+- 修复验证：
+  1. `mvn clean package -DskipTests -Ddbinit.dir=/tmp/ms-dbinit-test`（等价于容器内注入路径）→ jar 内含两份 SQL，SHA-256 与注入源**逐字节一致** ✅
+  2. 默认路径回归：`mvn clean process-resources`（无参数）→ target/classes/db/init 正常 ✅
+  3. `docker-compose.yml` YAML 解析合法，backend `context: .` + `dockerfile: backend/Dockerfile`、frontend `build.args.BACKEND_ORIGIN` 就位 ✅
+  4. 全量后端测试（真实 MySQL 8.4.11）：17/17 全绿 ✅
+- 结论：✅ 第二个 P0 修复并验证；compose 两大确定性缺陷（前端反代烘焙、后端缺 SQL）均已消除，剩余未实跑项仅为容器编排时序本身（04-I-1）。

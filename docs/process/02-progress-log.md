@@ -59,3 +59,8 @@
 - 发现并修复 P0：Next.js standalone rewrites 构建期烘焙导致 compose 内前端反代失效（实验证据与修复验证见 03-V-010）；frontend/Dockerfile 加构建 ARG、compose 加 build.args。
 - 其余对抗性检查全部通过（构建产物一致性、.dockerignore、CI 触发、素材入库、焦点样式、jar 名匹配等）。
 - tag `acceptance-r3`。
+
+## 2026-10-29 02:20 ~ 02:40 R3 续：第二个 P0（backend 容器缺 SQL）
+- 对抗性审查继续攻击 backend 构建：pom 引用 `../db/init` 超出 `./backend` 构建上下文，maven-resources 静默跳过 → 容器内 jar 缺 SQL → 后端启动即失败。
+- 修复：pom `dbinit.dir` 参数化 + backend/Dockerfile 改仓库根上下文 + compose `context: .` + 根 .dockerignore；本地模拟注入路径验证 SQL 逐字节入 jar；默认路径与 17/17 测试无回归。
+- `acceptance-r3` tag 重置到本修复后的最终 commit（tag 未推送共享过，判收前保持单一最终 tag）。

@@ -19,6 +19,9 @@
 
   <properties>
     <java.version>17</java.version>
+    <!-- 建表/种子 SQL 的单一来源目录：默认为仓库根 db/init（本地与 CI）；
+         容器构建时仓库根作为 Docker 构建上下文，由 Dockerfile COPY 后以 -Ddbinit.dir 注入（见 backend/Dockerfile） -->
+    <dbinit.dir>${project.basedir}/../db/init</dbinit.dir>
   </properties>
 
   <dependencies>
@@ -69,7 +72,7 @@
               <outputDirectory>${project.build.outputDirectory}/db/init</outputDirectory>
               <resources>
                 <resource>
-                  <directory>${project.basedir}/../db/init</directory>
+                  <directory>${dbinit.dir}</directory>
                   <includes>
                     <include>*.sql</include>
                   </includes>

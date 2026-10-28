@@ -79,6 +79,8 @@
 - [x] R3.1 P0：Next.js standalone rewrites 构建期烘焙 → compose 前端反代失效；改为 Dockerfile 构建参数注入 + compose build.args（V-010）（2026-10-29 02:12）
 - [x] R3.2 其余对抗性检查通过：jar 名与 Dockerfile 匹配、.dockerignore、CI 触发器、素材入库、focus-visible、种子数据一致性（2026-10-29 02:12）
 - [x] R3.3 复验：构建期注入模拟实验通过；干净重建 build ✅；tag `acceptance-r3`（2026-10-29 02:15）
+- [x] R3.4 P0：backend 构建上下文缺 db/init → jar 无建表 SQL、容器启动即失败；pom `dbinit.dir` 参数化 + Dockerfile 改仓库根上下文 + compose `context: .` + 根 .dockerignore（V-011）（2026-10-29 02:35）
+- [x] R3.5 复验：注入路径 SQL 逐字节入 jar、默认路径回归、17/17 全绿；`acceptance-r3` 重置到最终 commit（2026-10-29 02:40）
 
 完成标准：CI 全绿；README 覆盖全部要点；追溯矩阵每条都有实现与证据。
 

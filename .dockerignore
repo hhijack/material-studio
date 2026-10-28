@@ -1,0 +1,7 @@
+# 仓库根作为 backend 构建上下文时的瘦身清单（frontend 构建仍用 frontend/ 上下文及其自身 .dockerignore）
+.git
+**/node_modules
+**/.next
+**/target
+backend/data
+*.zip
