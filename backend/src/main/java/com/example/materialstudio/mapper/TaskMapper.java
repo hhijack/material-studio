@@ -19,7 +19,8 @@ public interface TaskMapper {
     /** 个人历史（按创建时间倒序），join template 带出标题与封面。 */
     List<TaskListItem> findListByUser(@Param("userId") String userId);
 
-    void markProcessing(@Param("id") String id, @Param("startedAt") LocalDateTime startedAt);
+    /** 仅当任务仍处于 WAITING 时置为 PROCESSING；返回受影响行数（0=已被处理，调用方应中止执行）。 */
+    int markProcessing(@Param("id") String id, @Param("startedAt") LocalDateTime startedAt);
 
     void setCurrentStage(@Param("id") String id, @Param("stage") Stage stage);
 

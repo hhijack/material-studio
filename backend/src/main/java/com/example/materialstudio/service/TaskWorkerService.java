@@ -106,10 +106,12 @@ public class TaskWorkerService {
         List<Asset> assets = taskAssetMapper.findAssetsByTaskId(taskId);
         SimConfig sim = simConfigService.current();
 
-        progress.markProcessing(taskId);
+        if (progress.markProcessing(taskId) == 0) {
+            // 防御：任务已不在 WAITING（异常重复投递等），不重复执行（01-D6）
+            return;
+        }
         TaskContext ctx = new TaskContext(taskId, task.userId(), template, assets, sim);
         List<Step> steps = List.of(materialCheckStep, simulateGenerateStep, resultFinalizeStep);
-
         engine.run(ctx, steps, new EngineListener() {
             @Override
             public void onStageStart(Stage stage) {

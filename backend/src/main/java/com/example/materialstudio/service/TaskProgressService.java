@@ -20,9 +20,10 @@ public class TaskProgressService {
         this.stepMapper = stepMapper;
     }
 
+    /** 返回受影响行数：0 表示任务已不在 WAITING（防御性条件，见 01-D6）。 */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void markProcessing(String taskId) {
-        taskMapper.markProcessing(taskId, LocalDateTime.now());
+    public int markProcessing(String taskId) {
+        return taskMapper.markProcessing(taskId, LocalDateTime.now());
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
