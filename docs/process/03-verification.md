@@ -88,3 +88,16 @@
 - `npm run build` → ✅ Compiled successfully
 - `cd backend && TEST_MYSQL_URL=...33061/material_studio_test... mvn test` → ✅ **Tests run: 17, Failures: 0, Errors: 0, BUILD SUCCESS**（含 markProcessing WHERE 条件变更后的真实 DB 路径）
 - 结论：✅ R2 全部修复项完成，复验门槛（前端四连全绿、后端 17/17）达成；tag `acceptance-r2`。
+
+## V-010 对抗性审查：compose 前端反代 P0 缺陷的发现与修复（2026-10-29 02:10）
+- 背景：终验对抗性审查攻击「从未实跑的 compose 链路」，实验验证 Next.js standalone 的 rewrites 目标在**构建期烘焙**进 `.next/standalone/.next/routes-manifest.json`，运行期 `BACKEND_ORIGIN` 环境变量完全不生效。
+- 发现过程（命令/预期/实际）：
+  1. 检查构建产物：`python3 -c "…routes-manifest.json…"` → `destination: "http://127.0.0.1:8080/api/:path*"` 已烘焙；`.next/standalone/` 内无 next.config 文件 → 烘焙实锤
+  2. 运行期实验：假后端起 8099 → `BACKEND_ORIGIN=http://127.0.0.1:8099 PORT=3100 node .next/standalone/server.js` → `curl /api/health` → **HTTP 500**（仍打烘焙的 8080，运行期 env 被忽略）
+  3. 影响：compose 中 frontend 构建阶段未设 BACKEND_ORIGIN → 烘焙 127.0.0.1:8080 → 容器内打到自身 → **验收环境 `docker compose up --build` 全链路不可用**（R-14 不达标）
+- 修复：`frontend/Dockerfile` 构建阶段加 `ARG BACKEND_ORIGIN=http://backend:8080` + `ENV`（注入 `npm run build`）；`docker-compose.yml` frontend 增加 `build.args.BACKEND_ORIGIN: http://backend:8080`（运行期 environment 中的同名变量已移除，避免误导）。
+- 修复验证（本地完整模拟 Docker 构建参数机制）：
+  1. `BACKEND_ORIGIN=http://127.0.0.1:8099 npm run build` → routes-manifest 烘焙 `http://127.0.0.1:8099/...` ✅
+  2. 运行期**不设任何环境变量**：`PORT=3101 node .next/standalone/server.js` + 假后端 8099 → `/api/health` → **HTTP 200 `{"from":"dummy-8099","ok":true}`** ✅
+  3. `npm run build`（无注入）复建干净产物，烘焙回默认 127.0.0.1:8080（本地 dev/npm start 正确）✅
+- 结论：✅ P0 已修复并验证构建期注入机制；compose 编排本身仍属未实跑范畴（04-I-1 更新），但「前端容器连不上后端」这一确定性缺陷已消除。

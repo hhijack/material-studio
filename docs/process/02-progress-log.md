@@ -53,3 +53,9 @@
 - 定点修复：P1-1（createAndTrackTask 抽取 + 组件测试 2 例）、P2-1（请求 8s 超时 + 轮询 in-flight 互斥 + tracker 用例）、P2-2（TopBar bootError 横幅 + 测试 2 例）、P2-3（上传 AbortController）、P3（markProcessing 防御 + README Cookie 说明）。
 - 复验：前端 lint ✅ tsc ✅（修一处测试类型标注）**19/19** ✅ build ✅；后端 **17/17** ✅（真实 MySQL 8.4）。
 - tag `acceptance-r2`（保留首轮 `acceptance`）；验证细节见 03 文档 V-009。
+
+## 2026-10-29 02:00 ~ 02:15 R3 终验对抗性审查轮
+- 用户要求对抗性审查后判收。逐条攻击 R-01~R-14 与验收路径；重点攻击未实跑的 compose 链路。
+- 发现并修复 P0：Next.js standalone rewrites 构建期烘焙导致 compose 内前端反代失效（实验证据与修复验证见 03-V-010）；frontend/Dockerfile 加构建 ARG、compose 加 build.args。
+- 其余对抗性检查全部通过（构建产物一致性、.dockerignore、CI 触发、素材入库、焦点样式、jar 名匹配等）。
+- tag `acceptance-r3`。

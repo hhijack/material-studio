@@ -2,7 +2,7 @@
 
 考生：黄俊恺。项目实现「浏览模板 → 上传图片 → 提交制作任务 → 后台多步骤异步处理 → 查看结果与历史」的完整业务闭环。制作不调用真实 AI，使用**可调耗时、可注入指定阶段失败**的模拟生成器；重点是 Java 后端的多步骤异步处理与前端异步状态管理。
 
-- **验收 commit**：见仓库 tag `acceptance-r2`（`git rev-parse acceptance-r2`；首轮验收 tag `acceptance` 保留备查）。
+- **验收 commit**：见仓库 tag `acceptance-r3`（`git rev-parse acceptance-r3`；首轮 `acceptance`、二轮 `acceptance-r2` 保留备查）。
 - **过程文档**：`docs/process/`（计划/决策/进度/验证/问题/需求追溯六份，全程边做边记）。
 
 ---
@@ -57,6 +57,7 @@ docker compose up --build
 ```
 
 - 首次启动顺序：MySQL 初始化（自动执行 `db/init/*.sql` 建表+种子）→ 健康检查通过 → backend 启动（再次幂等执行同一份 SQL 并初始化模拟配置）→ frontend 启动。
+- 注意：前端反代后端地址 `BACKEND_ORIGIN` 是**构建期参数**（Next.js standalone 的 rewrites 目标在构建时烘焙，运行期环境变量不生效），compose 已通过 `build.args` 注入 `http://backend:8080`；如需更改后端地址，修改 compose 中 `frontend.build.args.BACKEND_ORIGIN` 后重新 `--build` 即可（见 04-I-1 / V-010）。
 - 数据卷：`mysql-data`（数据库）、`app-data`（上传素材与生成结果，容器内 `/app/data`）。
 - 停止/重置：`docker compose down`；`docker compose down -v`（连数据一起清掉）。
 

@@ -75,6 +75,10 @@
 - [x] R2.4 P2-3 悬挂上传中止 → AbortController + 卸载清理（2026-10-29 01:42）
 - [x] R2.5 P3 markProcessing 防御条件 + README Cookie 限制说明（2026-10-29 01:44）
 - [x] R2.6 复验：前端 lint/tsc/19 测试/build 全绿；后端 17/17；tag `acceptance-r2`（2026-10-29 01:45，V-009）
+### R3 终验对抗性审查轮（2026-10-29，判收前对抗性审查）
+- [x] R3.1 P0：Next.js standalone rewrites 构建期烘焙 → compose 前端反代失效；改为 Dockerfile 构建参数注入 + compose build.args（V-010）（2026-10-29 02:12）
+- [x] R3.2 其余对抗性检查通过：jar 名与 Dockerfile 匹配、.dockerignore、CI 触发器、素材入库、focus-visible、种子数据一致性（2026-10-29 02:12）
+- [x] R3.3 复验：构建期注入模拟实验通过；干净重建 build ✅；tag `acceptance-r3`（2026-10-29 02:15）
 
 完成标准：CI 全绿；README 覆盖全部要点；追溯矩阵每条都有实现与证据。
 

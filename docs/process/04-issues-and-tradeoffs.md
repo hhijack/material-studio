@@ -52,3 +52,7 @@
   - 修复：上传位 AbortController，组件卸载统一 abort；ABORTED 分支复位上传位。
 - **P3-1 markProcessing 无 WHERE 防御**（CLOSED，V-009）：加 `AND status='WAITING'` + 受影响行数检查；记录于 01-D6。
 - **P3-2 会话 Cookie 为未签名 UUID、可伪造身份**（ACCEPTED）：匿名轻量方案的有意取舍，已在 README §8 已知限制中写明与收紧路径。
+
+### I-1 更新（R3 对抗性审查，2026-10-29 02:10）
+- 对抗性审查发现 compose 的确定性缺陷：前端 `BACKEND_ORIGIN` 原设计为运行期环境变量，但 Next.js standalone 的 rewrites 目标在构建期烘焙，验收环境 `docker compose up --build` 必然出现「前端容器内 500、连不上后端」。已改为构建参数注入（frontend/Dockerfile ARG + compose build.args），本地完整模拟验证通过（V-010）。
+- 残留风险（不变）：compose 编排本身（镜像构建、容器网络、healthcheck 时序）仍无法在本机实跑；其余各环节均有等效验证。状态：ACCEPTED（环境硬限制）。

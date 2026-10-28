@@ -50,10 +50,12 @@ services:
   frontend:
     build:
       context: ./frontend
+      args:
+        # Next.js standalone 的 rewrites 目标在构建期烘焙（routes-manifest.json），
+        # 运行期环境变量不生效，后端地址必须通过构建参数注入
+        BACKEND_ORIGIN: http://backend:8080
     container_name: ms-frontend
     environment:
-      # Next.js rewrites 把 /api/* 反代到 Java 后端
-      BACKEND_ORIGIN: http://backend:8080
       NEXT_TELEMETRY_DISABLED: "1"
     depends_on:
       backend:
