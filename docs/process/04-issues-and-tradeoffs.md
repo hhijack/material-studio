@@ -38,3 +38,17 @@
 ### I-8 CI 无法在本机触发（ACCEPTED）
 - 说明：无 GitHub 远端仓库（交付为源码包/本地目录），Actions 不会在本机运行。
 - 处置：CI 工作流按官方 actions（checkout@v4 / setup-node@v4 / setup-java@v4）+ 服务容器标准写法编写并人工复核；其每一步命令（npm ci/lint/typecheck/test/build、mvn test with MySQL）均已在本机以等效方式跑通（V-003、V-005）。若验收方 push 到 GitHub，工作流应直接可用。
+
+## R2 验收轮发现的问题（2026-10-29）
+
+### I-9 用户验收提出的问题清单与处置
+- **P1-1 受理成功但列表刷新失败 → 误报「提交失败」且新任务失联**（CLOSED，V-009）
+  - 修复：抽出 `createAndTrackTask`（taskSync.ts），createTask 成功即受理成功（启动 tracker、清上传位）；列表刷新失败走 connectionError 通道；仅受理失败才显示提交错误并保留上传位。新增组件测试 2 例。
+- **P2-1 请求无超时 + 轮询重叠堆积**（CLOSED，V-009）
+  - 修复：`api.request` 加 8s `AbortSignal.timeout`（上传 XHR 除外）；`taskTracker.pollOnce` 加 in-flight 互斥。新增 tracker 用例。
+- **P2-2 bootError 无渲染入口**（CLOSED，V-009）
+  - 修复：TopBar 增加「连接服务失败 + 重试」横幅（重试=重新 bootstrapSession，可重入）。新增 TopBar 测试 2 例。
+- **P2-3 详情页悬挂上传 setState**（CLOSED，V-009）
+  - 修复：上传位 AbortController，组件卸载统一 abort；ABORTED 分支复位上传位。
+- **P3-1 markProcessing 无 WHERE 防御**（CLOSED，V-009）：加 `AND status='WAITING'` + 受影响行数检查；记录于 01-D6。
+- **P3-2 会话 Cookie 为未签名 UUID、可伪造身份**（ACCEPTED）：匿名轻量方案的有意取舍，已在 README §8 已知限制中写明与收紧路径。

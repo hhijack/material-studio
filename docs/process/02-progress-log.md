@@ -47,3 +47,9 @@
 - README 撰写完成（R-13 全要点：技术版本/结构/命令/配置/接口与任务模型/六类演示/身份方案/已完成未完成+投入/部署回滚/AI 工作流/素材来源）。
 - 追溯矩阵定稿（05 文档），全部里程碑 M0~M6 完成；tag `acceptance` 指向最终 commit。
 - 项目交付状态：主链路 + 全部演示路径可运行可验证；compose 本机未实跑（无 Docker，已如实记录于 V-008/04-I-1）。
+
+## 2026-10-29 01:35 ~ 01:45 R2 验收修复轮
+- 用户完成独立验收：R-01~R-14 全部满足、无禁做项、复跑后端 17/17 与前端四连全绿；提出 1 P1 + 3 P2 + 2 P3（清单见 04-I-9）。
+- 定点修复：P1-1（createAndTrackTask 抽取 + 组件测试 2 例）、P2-1（请求 8s 超时 + 轮询 in-flight 互斥 + tracker 用例）、P2-2（TopBar bootError 横幅 + 测试 2 例）、P2-3（上传 AbortController）、P3（markProcessing 防御 + README Cookie 说明）。
+- 复验：前端 lint ✅ tsc ✅（修一处测试类型标注）**19/19** ✅ build ✅；后端 **17/17** ✅（真实 MySQL 8.4）。
+- tag `acceptance-r2`（保留首轮 `acceptance`）；验证细节见 03 文档 V-009。

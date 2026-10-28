@@ -68,6 +68,14 @@
 - [x] 6.5 compose 最终状态确认（YAML 校验通过；实跑受限见 04-I-1 / V-008；Dockerfile 构建步骤本地等效验证）
 - [x] 6.6 全量走查：R-01~R-14 追溯矩阵定稿（05 文档最终版）；git tag `acceptance`（2026-10-29 01:45）
 
+### R2 验收修复轮（2026-10-29，用户验收通过后提出的定点修复）
+- [x] R2.1 P1-1 受理成功但列表刷新失败误报「提交失败」、新任务失联 → `createAndTrackTask` 抽取 + 组件测试 2 例（2026-10-29 01:42）
+- [x] R2.2 P2-1 请求 8s 超时 + 轮询 in-flight 互斥 → api.ts/taskTracker.ts + tracker 新用例（2026-10-29 01:42）
+- [x] R2.3 P2-2 bootError 渲染与重试 → TopBar 横幅 + TopBar 测试 2 例（2026-10-29 01:43）
+- [x] R2.4 P2-3 悬挂上传中止 → AbortController + 卸载清理（2026-10-29 01:42）
+- [x] R2.5 P3 markProcessing 防御条件 + README Cookie 限制说明（2026-10-29 01:44）
+- [x] R2.6 复验：前端 lint/tsc/19 测试/build 全绿；后端 17/17；tag `acceptance-r2`（2026-10-29 01:45，V-009）
+
 完成标准：CI 全绿；README 覆盖全部要点；追溯矩阵每条都有实现与证据。
 
 ## 计划调整记录

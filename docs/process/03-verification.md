@@ -66,3 +66,25 @@
 ## V-008 compose 验证：未验证
 - 原因：本机无 Docker（04-I-1）。compose 配置采用的均为标准模式（mysql:8.4 官方镜像 + docker-entrypoint-initdb.d 挂载 + healthcheck + depends_on condition；backend/frontend 多阶段构建 Dockerfile，其中 maven package / npm ci / npm run build 等步骤均已在本地等效验证）。
 - 缓解：CI（GitHub Actions）含 mysql:8.4 service 的后端测试与前端四连检查，作为等效云端验证；验收方按 README「一键启动」执行 `docker compose up --build` 即可。
+
+## V-009 R2 验收修复轮验证（2026-10-29 01:40~01:45）
+
+> 背景：用户完成首轮验收（独立复跑确认 R-01~R-14 全部满足、无禁做项），提出 1 个 P1 + 3 个 P2 + 1 个 P3 建议，见 04-I-9。本轮为定点修复。
+
+### 修复内容
+| 项 | 修复 | 验证 |
+|---|---|---|
+| P1-1 受理成功但列表刷新失败误报「提交失败」、新任务失联 | 抽出 `lib/taskSync.ts#createAndTrackTask`：`createTask` 成功即受理成功（启动 tracker、清上传位）；随后的 myTasks 刷新失败只走 `setConnectionError` 通道；仅受理本身失败才显示提交错误且保留上传位 | 新增组件测试 `detailPageSubmit.test.tsx` 2 例（受理成功+刷新失败 / 受理失败），断言：无提交错误提示、tracker.start 已调用、connectionError 已设置、上传位已清空（0/1）/ 受理失败时上传位保留（1/1）且不误设 connectionError |
+| P2-1a 请求无超时 | `api.request` 加 `AbortSignal.timeout(8000)`（上传 XHR 不受影响） | tsc + 既有测试回归 |
+| P2-1b 轮询无 in-flight 互斥 | `taskTracker.pollOnce` 加 in-flight 互斥（上一轮未返回跳过本次 tick） | taskTracker 新增用例「上一轮未返回时跳过新 tick」：fetchMock 调用 1 次不堆积，响应后正常落地并停止 |
+| P2-2 bootError 无展示 | TopBar 渲染「连接服务失败：{原因} + 重试」横幅，重试=重新执行 `bootstrapSession`（可重入） | 新增 `TopBar.test.tsx` 2 例：bootError 显示横幅→点击重试→会话建立、横幅消失；会话正常时不显示 |
+| P2-3 悬挂上传 setState | 详情页为每个上传位持有 AbortController，卸载时全部 abort；ABORTED 分支复位上传位 | 代码路径 review + 回归测试（卸载中止为浏览器行为，jsdom 下以 ABORTED 复位逻辑覆盖） |
+| P3 markProcessing 防御 | SQL 加 `AND status='WAITING'` 并检查受影响行数（0 则中止）；01-D6 补记；README §8 补 Cookie 未签名说明 | 后端 17/17 全绿（含 TaskFlowTest 等真实 DB 路径） |
+
+### 命令与结果
+- `cd frontend && npm run lint` → ✅ 0 错误
+- `npm run typecheck` → ✅ 0 错误（首跑 1 个测试类型错误 MockInstance/Mock，已修）
+- `npm test -- --run` → ✅ **Test Files 5 passed, Tests 19 passed**（14 + 新增 5：tracker 互斥 1、详情页受理路径 2、TopBar 2）
+- `npm run build` → ✅ Compiled successfully
+- `cd backend && TEST_MYSQL_URL=...33061/material_studio_test... mvn test` → ✅ **Tests run: 17, Failures: 0, Errors: 0, BUILD SUCCESS**（含 markProcessing WHERE 条件变更后的真实 DB 路径）
+- 结论：✅ R2 全部修复项完成，复验门槛（前端四连全绿、后端 17/17）达成；tag `acceptance-r2`。
