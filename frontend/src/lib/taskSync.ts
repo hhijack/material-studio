@@ -17,6 +17,8 @@ function makeTracker() {
       const session = useSessionStore.getState();
       if (!session.user || session.user.id !== userId) return; // 旧用户响应不落地
       useTaskStore.getState().mergeTasks(list);
+      // 查询恢复：清除「查询异常」标记（查询异常 ≠ 任务失败，恢复后不再误提示）
+      useTaskStore.getState().setConnectionError(null);
     },
     onError: (message) => {
       // 查询异常 ≠ 任务失败：只标记连接状态，任务信息原样保留

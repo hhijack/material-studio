@@ -19,8 +19,22 @@
 
 ## 待补问题
 
-### I-4 （M2 上传进度条：fetch 不支持上传进度，需 XHR）（OPEN）
-- 计划：XMLHttpRequest 实现 upload.onprogress；若时间紧可退化为「上传中」状态展示（仍满足 R-07 状态区分）。
+### I-4 上传进度条实现（CLOSED）
+- 结论：XMLHttpRequest `upload.onprogress` 实现（fetch 不支持上传进度），前端上传位显示百分比进度条；实测正常。
 
-### I-5 服务重启后任务恢复（题目明确范围外）
-- 说明：进程重启时 WAITING/PROCESSING 任务不会自动续跑（重启前卡在 PROCESSING）。按题目范围外处理，README 说明；DB 中状态保持真实（PROCESSING 记录仍可见，不会自动变成功/失败）。
+### I-5 服务重启后任务恢复（题目明确范围外）（ACCEPTED，已实机验证其表现）
+- 说明：进程被强杀时 WAITING/PROCESSING 任务停在原状态（实测强杀后任务保持「处理中·模拟生成」，不自动续跑也不会误标失败）；优雅关闭（SIGTERM）时 @PreDestroy 等待工作线程 10s，正在执行的任务大概率能跑完（实测一次优雅重启中任务正常完成落库）。
+- 领域扩展讨论（README 亦有）：可用「启动时把 PROCESSING 扫回 WAITING 重新入队」实现恢复，但中断步骤的幂等性（结果文件可能已写）需要引入步骤级断点，未实现。
+
+### I-6 查询恢复后 connectionError 未清除（CLOSED，2026-10-29 01:10）
+- 发现：V-007 浏览器走查中断连→恢复后，任务已恢复查询但顶栏「查询异常」横幅不消失。
+- 根因：taskSync 的 apply 回调只合并数据未清错误标志。
+- 修复：apply 成功路径加 `setConnectionError(null)`；复验横幅自动消失。taskStore 单测对「恢复清除」行为已有覆盖。
+
+### I-7 同步执行模式下引擎在外层事务内运行（CLOSED，2026-10-29 00:55）
+- 发现：V-005 集成测试首跑 Lock wait timeout——sync 模式在 `create()` 未提交事务内执行引擎，REQUIRES_NEW 的进度更新被行锁阻塞。
+- 修复：`worker.submit` 注册到 `TransactionSynchronization.afterCommit()`，任务行先提交再执行；async 模式语义不变。
+
+### I-8 CI 无法在本机触发（ACCEPTED）
+- 说明：无 GitHub 远端仓库（交付为源码包/本地目录），Actions 不会在本机运行。
+- 处置：CI 工作流按官方 actions（checkout@v4 / setup-node@v4 / setup-java@v4）+ 服务容器标准写法编写并人工复核；其每一步命令（npm ci/lint/typecheck/test/build、mvn test with MySQL）均已在本机以等效方式跑通（V-003、V-005）。若验收方 push 到 GitHub，工作流应直接可用。

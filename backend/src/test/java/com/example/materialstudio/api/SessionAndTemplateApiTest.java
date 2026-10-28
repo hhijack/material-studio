@@ -12,17 +12,25 @@ import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MvcResult;
 
 /** 会话与模板接口（R-02、R-10 的服务端行为）。 */
 class SessionAndTemplateApiTest extends BaseIntegrationTest {
 
     @Test
-    @DisplayName("首次访问建立匿名会话并下发 Cookie；再次访问复用同一用户")
+    @DisplayName("首次访问建立匿名会话并下发 Cookie；携带 Cookie 复用同一用户")
     void sessionCreateAndReuse() throws Exception {
-        String first = Api.session(mockMvc);
-        String second = Api.session(mockMvc);
-        assertThat(first).isNotBlank();
-        assertThat(second).isEqualTo(first);
+        MvcResult first = mockMvc.perform(get("/api/session")).andExpect(status().isOk()).andReturn();
+        Cookie cookie = first.getResponse().getCookie("MS_SESSION");
+        assertThat(cookie).isNotNull();
+
+        // 带 Cookie 再次访问：复用同一用户，不新建
+        MvcResult second = mockMvc.perform(get("/api/session").cookie(cookie)).andExpect(status().isOk()).andReturn();
+        assertThat(second.getResponse().getContentAsString()).contains(cookie.getValue());
+
+        // 不带 Cookie 的全新访问会得到新身份（用于演示隔离）
+        MvcResult fresh = mockMvc.perform(get("/api/session")).andExpect(status().isOk()).andReturn();
+        assertThat(fresh.getResponse().getCookie("MS_SESSION").getValue()).isNotEqualTo(cookie.getValue());
     }
 
     @Test

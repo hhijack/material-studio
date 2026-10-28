@@ -21,6 +21,8 @@ import java.util.Set;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 /** 任务受理（校验+落库+入队，立即返回）与只读查询。 */
 @Service
@@ -85,7 +87,13 @@ public class TaskService {
                 new TaskStepRow(0, taskId, 2, Stage.RESULT_FINALIZE, StepStatus.PENDING, null, null, null)));
         taskAssetMapper.insertBatch(taskId, assets);
 
-        worker.submit(taskId);
+        // 关键：任务行必须先提交，执行引擎才能看到它（sync 模式在提交后同线程执行，async 模式入队）
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                worker.submit(taskId);
+            }
+        });
         return new CreateResult(taskId);
     }
 

@@ -1,20 +1,20 @@
-# 05 需求追溯矩阵（R-01 ~ R-14）
+# 05 需求追溯矩阵（R-01 ~ R-14）最终版
 
-> 随里程碑更新：每条需求 → 实现位置（文件/接口/页面）→ 对应测试 → 演示步骤。状态：☐ 未开始 / ◐ 进行中 / ☑ 完成（含证据编号）。
+> 每条需求 → 实现位置 → 对应测试/验证 → 演示步骤。验证编号对应 03 文档（V-xxx）。
 
-| 需求 | 摘要 | 状态 | 实现位置 | 测试 | 演示步骤 |
-|---|---|---|---|---|---|
-| R-01 | 技术栈与职责分工 | ☐ | frontend/（Next.js 15 App Router + TS）；backend/（Spring Boot 3.5 + MyBatis + MySQL）；Next 仅静态+反代 | CI 构建 | README「架构」节 |
-| R-02 | 模板列表与模拟数据 | ☐ | 待 M1/M2 | 待补 | 待补 |
-| R-03 | 详情、上传与提交前校验 | ☐ | 待 M2 | 待补 | 待补 |
-| R-04 | 受理与异步执行 | ☐ | 待 M3 | 待补 | 待补 |
-| R-05 | 多步骤状态与查询只读 | ☐ | 待 M3 | 待补 | 待补 |
-| R-06 | 失败与模拟控制 | ☐ | 待 M5 | 待补 | 待补 |
-| R-07 | 状态表达与请求异常 | ☐ | 待 M4 | 待补 | 待补 |
-| R-08 | 多任务与查询生命周期 | ☐ | 待 M4 | 待补 | 待补 |
-| R-09 | 刷新恢复与结果记录 | ☐ | 待 M4 | 待补 | 待补 |
-| R-10 | 用户身份与个人记录 | ☐ | 待 M5 | 待补 | 待补 |
-| R-11 | 参考界面与交互 | ☐ | 待 M2 | 人工走查 | 待补 |
-| R-12 | CI 与关键测试 | ☐ | 待 M6 | CI 运行记录 | .github/workflows/ci.yml |
-| R-13 | 提交材料与 README | ☐ | 待 M6 | — | README |
-| R-14 | 容器交付 | ☐ | docker-compose.yml（M0 初版） | 本地受限，见 04-I-1 | README「一键启动」 |
+| 需求 | 实现位置（文件/接口/页面） | 测试 / 验证 | 演示步骤 |
+|---|---|---|---|
+| R-01 技术栈与职责 | `frontend/`（Next.js 15.5 + React 19.1 + TS，`next.config.ts` rewrites 仅做反代）；`backend/`（Spring Boot 3.5.5 + MyBatis 3.0.5 + MySQL 8.4，`controller/service/mapper/task/`）；业务与持久化全在 Java/MySQL | V-003（前端构建）、V-005/V-006（后端真库运行）、CI | README「架构」；`docker compose up` 后仅前后端两容器+DB |
+| R-02 列表与模拟数据 | 接口 `GET /api/templates`、`GET /api/templates/{id}`、`GET /api/categories`（`TemplateController`、`TemplateService`、`TemplateMapper.xml`）；种子 `db/init/02-seed.sql`（6 模板/4 分类）；封面素材 `frontend/public/demo/covers/*.svg`（`frontend/scripts/gen-covers.mjs` 生成）；页面 `frontend/src/app/page.tsx` | `SessionAndTemplateApiTest`（列表/分类/详情/404）；V-007 列表+筛选走查 | 首页浏览 → 点击分类 chip 筛选 → 点卡片进详情 |
+| R-03 详情、上传与提交前校验 | 页面 `src/app/templates/[id]/page.tsx` + `components/UploadSlot.tsx`；上传接口 `POST /api/uploads`（`UploadController`、`AssetService`：类型/大小/魔数校验，本地存储 `StorageService`）；文件读取 `GET /api/files/uploads/{id}`（归属校验） | `TaskQueryAndValidationTest.uploadValidation`（类型/魔数/超限 400）；V-007 注入 text/plain 得「不支持的图片类型」；V-006 上传链路 | 详情页选择图片 → 预览/替换/移除 → 故意选错类型看提示 → 全部就绪后提交 |
+| R-04 受理与异步执行 | `POST /api/tasks`（`TaskController`/`TaskService.create`：校验+落库+**afterCommit 后入队**立即返回）；执行 `TaskWorkerService`（单线程队列）+ `TaskEngine` | `TaskFlowTest`、`TaskEngineTest`；V-006（受理 93ms 返回，不等 8.5s 模拟）；V-007 提交后卡片即时出现 | 详情页提交 → 按钮立刻恢复可用、任务卡片立即出现 |
+| R-05 多步骤状态与查询只读 | `task/TaskEngine.java`（顺序执行+失败中断）、`MaterialCheckStep/SimulateGenerateStep/ResultFinalizeStep`、`TaskProgressService`（每边界 REQUIRES_NEW 落库）；表 `task.status/current_stage` + `task_step`（每阶段一行 RUNNING/PASSED/FAILED + 时间戳）；查询 `GET /api/tasks/{id}`、`GET /api/tasks/mine` 只读 | `TaskEngineTest`（顺序/中断纯单测）、`TaskFlowTest`（三步 PASSED+时间戳）、`TaskQueryAndValidationTest.completedTaskDoesNotRegress`；V-006 实机观察三阶段 | 提交任务 → 右侧卡片实时显示当前阶段（素材检查→模拟生成→结果整理）→ 成功 |
+| R-06 失败与模拟控制 | `sim_config` 表（属性初始化 `SimConfigService`）+ `GET/PUT /api/dev/sim-config`（`DevSimController`，`app.sim.dev-api-enabled` 可关）；`TaskContext.requireNoInjectedFailure` 各步骤真实校验后注入 | `TaskFailureInjectionTest`（注入/恢复/参数校验）；V-006 实机注入失败 | `curl -X PUT .../api/dev/sim-config -d '{"failStage":"SIMULATE_GENERATE",...}'` → 提交 → 卡片显示失败阶段+原因；再置 `failStage:null` 恢复（README 详述） |
+| R-07 状态表达与请求异常 | 前端状态：上传中（`UploadSlot` 进度）/提交中（`submitting`）/等待/处理中（`TaskStatusCard` 徽标+阶段指示）/成功/失败；查询异常：`taskStore.connectionError` + TopBar 横幅 + 面板提示 + ⟳ 手动恢复，**不改动任务状态** | `taskStore.test`（异常保留数据）、`TaskStatusCard.test`、`taskTracker.test`；V-007 断后端实测：横幅出现、卡片保持处理中、恢复后横幅自动消失 | 提交任务 → 停后端 → 观察横幅与卡片（不变失败）→ 起后端 → 自动恢复 |
+| R-08 多任务与查询生命周期 | `lib/taskStore.ts`（按 id 增量合并互不串扰）+ `lib/taskTracker.ts`（1.5s 轮询；无未完成任务即停；切换用户 epoch 失效旧响应 + stop 清理）；受理成功 `taskTracker.start` | `taskStore.test`、`taskTracker.test`（6 例：空闲停轮询/全部结束自动停/异常保持重试/切换用户防串数据/stop 防落地/手动 retry）；V-006 双任务排队实测 | 连续提交多个任务 → 各卡片独立流转；任务全部结束后（DevTools Network）无轮询请求 |
+| R-09 刷新恢复与结果记录 | `AppBoot` 启动 `bootstrapSession()`：会话 + `GET /api/tasks/mine` 恢复；历史页 `src/app/history/page.tsx` 与详情页右栏（`TaskStatusCard`：创建时间/状态/成功预览/失败原因） | `TaskFlowTest`（历史字段）、V-007 reload 恢复实测 | 任意页面刷新 → 历史与进行中任务自动恢复跟踪；「历史记录」页看全部 |
+| R-10 用户身份与个人记录 | `SessionController`（`GET/PATCH/DELETE /api/session`）、`SessionService`（匿名 UUID 用户表 `user`）、`SessionCookies`（HttpOnly 180d）；`@CurrentUser` 参数解析（`CurrentUserArgumentResolver`）；前端 `AccountDialog`（昵称/UID/切换身份） | `SessionAndTemplateApiTest`、`TaskQueryAndValidationTest.userIsolation`、`requiresSession`；V-007 改昵称/切换身份实测 | 顶栏「账号设置」→ 改昵称 → 「切换身份」→ 历史清空（新身份）；README 详述 |
+| R-11 参考界面与交互 | `app/page.module.css`、`templates/[id]/page.module.css`、`history`、语义化标签 + aria（tablist/dialog/progressbar/alert）、`:focus-visible` 焦点、上传/图标按钮 aria-label；小屏单列 | V-007 全程截图走查 + 390px 视口实测 | 桌面/窄窗口分别浏览三大页面 |
+| R-12 CI 与关键测试 | `.github/workflows/ci.yml`：前端 lint+typecheck+test+build；后端 `mvn test`（mysql:8.4 service 容器）+ package | 后端 17 例（`TaskEngineTest`/`TaskFlowTest`/`TaskFailureInjectionTest`/`TaskQueryAndValidationTest`/`SessionAndTemplateApiTest`）本地全绿（V-005）；前端 14 例全绿（V-003） | push 后查看 Actions；本地等效命令见 README |
+| R-13 提交材料与 README | `README.md`（技术版本/结构/命令/接口/状态设计/演示/身份/已完成未完成+投入/部署回滚/AI 工作流/素材来源） | 本文档与 00~04 文档全程留痕 | 阅读 README 与 `docs/process/` |
+| R-14 容器交付 | `docker-compose.yml`（mysql:8.4 + init 挂载 + healthcheck；backend/frontend 多阶段 Dockerfile；`BACKEND_ORIGIN` 注入）+ `backend/Dockerfile` + `frontend/Dockerfile` | **V-008：本机无 Docker 未实跑**（04-I-1）；Dockerfile 内构建步骤已在本地等效验证；SQL 在真实 MySQL 8.4 验证 | `docker compose up --build` → http://localhost:3000 |

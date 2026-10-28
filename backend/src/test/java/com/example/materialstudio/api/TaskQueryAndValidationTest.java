@@ -95,7 +95,7 @@ class TaskQueryAndValidationTest extends BaseIntegrationTest {
     void submitValidation() throws Exception {
         String alice = Api.session(mockMvc);
         String bob = Api.session(mockMvc);
-        JsonNode a1 = Api.upload(mockMvc, alice, "travel-postcard", TestImages.PNG_1PX, "a.jpg", "image/jpeg");
+        JsonNode a1 = Api.upload(mockMvc, alice, "travel-postcard", TestImages.PNG_1PX, "a.png", "image/png");
         JsonNode a2 = Api.upload(mockMvc, alice, "travel-postcard", TestImages.PNG_1PX, "b.png", "image/png");
         String asset1 = a1.path("id").asText();
         String asset2 = a2.path("id").asText();
