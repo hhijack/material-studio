@@ -29,6 +29,7 @@ export class TaskTracker {
   private timerCancel: (() => void) | null = null;
   private userId: string | null = null;
   private epoch = 0;
+  private inFlight = false;
 
   constructor(deps: TrackerDeps) {
     this.deps = deps;
@@ -74,7 +75,9 @@ export class TaskTracker {
   }
 
   private async pollOnce() {
-    if (!this.userId) return;
+    // in-flight 互斥：上一轮未返回时跳过本次 tick，防止慢响应 + 短间隔造成请求堆积
+    if (!this.userId || this.inFlight) return;
+    this.inFlight = true;
     const { fetchMine, apply, onError, onIdle } = this.deps;
     const requestedUserId = this.userId;
     const requestedEpoch = this.epoch;
@@ -95,6 +98,8 @@ export class TaskTracker {
       onError(e instanceof Error ? e.message : "查询失败");
       // 查询异常时保持轮询（自动恢复），下次成功会清除错误
       this.scheduleNext();
+    } finally {
+      this.inFlight = false;
     }
   }
 }

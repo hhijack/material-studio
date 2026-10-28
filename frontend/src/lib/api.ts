@@ -19,13 +19,20 @@ export class ApiError extends Error {
   }
 }
 
+/** 普通请求超时：防止后端悬挂时轮询请求长期 pending（上传走 XHR，不受此限）。 */
+const REQUEST_TIMEOUT_MS = 8000;
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   let res: Response;
   try {
     // 同源请求（Next.js rewrites 反代到 Java），携带会话 Cookie
-    res = await fetch(path, { credentials: "include", ...init });
+    res = await fetch(path, {
+      credentials: "include",
+      ...init,
+      signal: init?.signal ?? AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+    });
   } catch {
-    // 网络层失败（后端不可达等）：与业务失败区分开
+    // 网络层失败（后端不可达、超时等）：与业务失败区分开
     throw new ApiError(0, "NETWORK_ERROR", "无法连接服务器");
   }
   if (!res.ok) {

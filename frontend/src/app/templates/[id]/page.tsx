@@ -1,10 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { api, ApiError } from "@/lib/api";
-import { taskTracker } from "@/lib/taskSync";
+import { createAndTrackTask, taskTracker } from "@/lib/taskSync";
 import { useSessionStore } from "@/lib/sessionStore";
 import { useTaskStore } from "@/lib/taskStore";
 import type { Template } from "@/lib/types";
@@ -31,6 +31,16 @@ export default function TemplateDetailPage() {
 
   const [slots, setSlots] = useState<SlotState[]>([]);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  // 进行中的上传：组件卸载时全部中止，避免悬挂 promise 在卸载后 setState
+  const uploadControls = useRef(new Map<number, AbortController>());
+
+  useEffect(() => {
+    const controls = uploadControls.current;
+    return () => {
+      for (const controller of controls.values()) controller.abort();
+      controls.clear();
+    };
+  }, []);
 
   const user = useSessionStore((s) => s.user);
   const connectionError = useTaskStore((s) => s.connectionError);
@@ -85,6 +95,8 @@ export default function TemplateDetailPage() {
           return next;
         }
         next[index] = { ...next[index], uploading: true, progress: 0, asset: null, error: null };
+        const controller = new AbortController();
+        uploadControls.current.set(index, controller);
         api
           .upload(template.id, file, (pct) => {
             setSlots((cur) => {
@@ -92,8 +104,9 @@ export default function TemplateDetailPage() {
               arr[index] = { ...arr[index], progress: pct };
               return arr;
             });
-          })
+          }, controller.signal)
           .then((asset) => {
+            uploadControls.current.delete(index);
             setSlots((cur) => {
               const arr = [...cur];
               arr[index] = { ...arr[index], uploading: false, asset, progress: 100, error: null };
@@ -101,9 +114,14 @@ export default function TemplateDetailPage() {
             });
           })
           .catch((err) => {
-            if (err instanceof ApiError && err.code === "ABORTED") return;
+            uploadControls.current.delete(index);
             setSlots((cur) => {
               const arr = [...cur];
+              if (err instanceof ApiError && err.code === "ABORTED") {
+                // 组件已卸载：复位上传位即可，不展示错误
+                arr[index] = emptySlot();
+                return arr;
+              }
               arr[index] = {
                 ...arr[index],
                 uploading: false,
@@ -136,19 +154,15 @@ export default function TemplateDetailPage() {
     if (!template || !canSubmit || !user) return;
     useTaskStore.getState().setSubmitting(true);
     setSubmitError(null);
-    try {
-      const assetIds = slots.map((s) => s.asset!.id);
-      await api.createTask(template.id, assetIds);
-      // 受理成功：立即刷新一次任务列表并启动跟踪（按钮不再停留在“提交中”）
-      const list = await api.myTasks();
-      useTaskStore.getState().mergeTasks(list);
-      taskTracker.start(user.id);
+    const result = await createAndTrackTask(template.id, slots.map((s) => s.asset!.id), user.id);
+    if (result.accepted) {
+      // 受理成功：清空上传位（可直接制作下一个）；任务卡片由跟踪器带入
       setSlots(Array.from({ length: template.requiredImageCount }, emptySlot));
-    } catch (e) {
-      setSubmitError(e instanceof Error ? e.message : "提交失败");
-    } finally {
-      useTaskStore.getState().setSubmitting(false);
+    } else {
+      // 受理失败：保留上传位，用户可直接重试；错误仅来自受理本身
+      setSubmitError(result.error);
     }
+    useTaskStore.getState().setSubmitting(false);
   }
 
   // 右侧历史：本模板的任务（store 驱动，轮询自动更新）

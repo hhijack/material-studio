@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { useSessionStore } from "@/lib/sessionStore";
 import { useTaskStore } from "@/lib/taskStore";
+import { bootstrapSession } from "@/lib/taskSync";
 import AccountDialog from "./AccountDialog";
 import styles from "./TopBar.module.css";
 
@@ -12,6 +13,7 @@ export default function TopBar() {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   const user = useSessionStore((s) => s.user);
+  const bootError = useSessionStore((s) => s.bootError);
   const connectionError = useTaskStore((s) => s.connectionError);
 
   return (
@@ -44,6 +46,14 @@ export default function TopBar() {
           <span>{user ? user.nickname : "未连接"}</span>
         </button>
       </div>
+      {bootError && !user && (
+        <div className={styles.errorBar} role="alert">
+          <span>连接服务失败：{bootError}</span>
+          <button type="button" className={styles.retryLink} onClick={() => void bootstrapSession()}>
+            重试
+          </button>
+        </div>
+      )}
       {connectionError && (
         <div className={styles.connBar} role="alert">
           状态查询暂时不可用（{connectionError}），任务信息已保留，正在自动重试…

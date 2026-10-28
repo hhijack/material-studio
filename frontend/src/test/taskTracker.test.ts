@@ -23,6 +23,7 @@ interface Harness {
   deps: TrackerDeps;
   /** 当前仍然有效的排定轮询数（stop 取消后不再计入） */
   activeSchedules: () => number;
+  fetchMock: ReturnType<typeof vi.fn>;
   applyMock: ReturnType<typeof vi.fn>;
   errorMock: ReturnType<typeof vi.fn>;
   idleMock: ReturnType<typeof vi.fn>;
@@ -33,15 +34,17 @@ interface Harness {
 
 function harness(): Harness {
   const entries: Array<{ fn: () => void; cancelled: boolean }> = [];
+  const fetchMock = vi.fn();
   const applyMock = vi.fn();
   const errorMock = vi.fn();
   const idleMock = vi.fn();
   const responses: Array<() => Promise<TaskListItem[]>> = [];
+  fetchMock.mockImplementation(() => {
+    const next = responses.shift();
+    return next ? next() : Promise.reject(new Error("no scripted response"));
+  });
   const deps: TrackerDeps = {
-    fetchMine: () => {
-      const next = responses.shift();
-      return next ? next() : Promise.reject(new Error("no scripted response"));
-    },
+    fetchMine: fetchMock,
     apply: applyMock,
     onError: errorMock,
     onIdle: idleMock,
@@ -56,6 +59,7 @@ function harness(): Harness {
   return {
     deps,
     activeSchedules: () => entries.filter((e) => !e.cancelled).length,
+    fetchMock,
     applyMock,
     errorMock,
     idleMock,
@@ -181,5 +185,24 @@ describe("taskTracker：查询生命周期（R-08）", () => {
     await flush();
     expect(h.applyMock).toHaveBeenCalledTimes(1);
     expect(h.errorMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("上一轮轮询未返回时跳过新 tick（in-flight 互斥，防请求堆积）", async () => {
+    const h = harness();
+    let resolveSlow!: (v: TaskListItem[]) => void;
+    h.respondWith(() => new Promise((resolve) => (resolveSlow = resolve)));
+    const tracker = new TaskTracker(h.deps);
+    tracker.start("u1"); // 第 1 次查询发出（慢）
+    await flush();
+    expect(h.fetchMock).toHaveBeenCalledTimes(1);
+
+    await h.runScheduledTick(); // 上一轮未返回 → 跳过，不发新请求
+    expect(h.fetchMock).toHaveBeenCalledTimes(1);
+    expect(h.errorMock).not.toHaveBeenCalled();
+
+    resolveSlow([task("a", "SUCCESS")]);
+    await flush();
+    expect(h.applyMock).toHaveBeenCalledTimes(1);
+    expect(h.activeSchedules()).toBe(0); // 全部终态 → 停止轮询
   });
 });

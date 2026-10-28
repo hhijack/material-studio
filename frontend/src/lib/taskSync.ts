@@ -56,3 +56,32 @@ export async function switchIdentity() {
   taskTracker.start(user.id);
   return user;
 }
+
+/**
+ * 受理制作任务（R-04/R-07 的受理路径）：
+ * - `createTask` 成功即视为受理成功：立即启动跟踪（避免此前空闲时新任务失联），并清空查询异常标记；
+ * - 受理成功后的「任务列表刷新」失败 ≠ 提交失败：只走查询异常通道，等轮询恢复后新任务自然出现；
+ * - 仅 `createTask` 本身失败才返回受理失败（调用方保留上传位供重试，不得清空）。
+ */
+export async function createAndTrackTask(
+  templateId: string,
+  assetIds: string[],
+  userId: string
+): Promise<{ accepted: true } | { accepted: false; error: string }> {
+  try {
+    await api.createTask(templateId, assetIds);
+  } catch (e) {
+    return { accepted: false, error: e instanceof Error ? e.message : "提交失败" };
+  }
+  taskTracker.start(userId);
+  try {
+    const list = await api.myTasks();
+    if (useSessionStore.getState().user?.id === userId) {
+      useTaskStore.getState().mergeTasks(list);
+      useTaskStore.getState().setConnectionError(null);
+    }
+  } catch (e) {
+    useTaskStore.getState().setConnectionError(e instanceof Error ? e.message : "任务列表暂时不可用");
+  }
+  return { accepted: true };
+}
