@@ -25,7 +25,7 @@ material-studio/
 │   ├── src/app/                  #   列表(/) 详情(/templates/[id]) 历史(/history)
 │   ├── src/components/           #   TopBar / AccountDialog / UploadSlot / TaskStatusCard / AppBoot
 │   ├── src/lib/                  #   api.ts(请求封装) taskStore.ts(任务仓库) taskTracker.ts(轮询生命周期) taskSync.ts(接线) types.ts
-│   ├── src/test/                 #   vitest 测试（14 例）
+│   ├── src/test/                 #   vitest 测试（19 例）
 │   ├── scripts/gen-covers.mjs    #   模板封面 SVG 生成脚本（素材来源，可复现）
 │   ├── public/demo/covers/       #   6 张本地模板封面（无外链依赖）
 │   └── Dockerfile                #   多阶段构建（node:22-alpine，standalone 运行）
@@ -201,11 +201,11 @@ curl -X PUT http://localhost:3000/api/dev/sim-config -H 'Content-Type: applicati
 ## 8. 已完成 / 未完成项、已知限制与实际投入
 
 ### 已完成（均可在 `docs/process/03-verification.md` 找到命令与结果）
-- R-01~R-14 全部要求的主体功能与技术栈约束；后端 17 例测试（真实 MySQL 8.4）与前端 14 例测试全绿；前端 lint/tsc/build 全过；`docker compose up --build` 配置齐备。
+- R-01~R-14 全部要求的主体功能与技术栈约束；后端 17 例测试（真实 MySQL 8.4）与前端 19 例测试全绿；前端 lint/tsc/build 全过；`docker compose up --build` 配置齐备（含终验对抗性审查后修复的两处容器构建缺陷，见下）。
 - 关键行为实机验证：受理即返回（93ms）、三步顺序边界落库、指定阶段失败/恢复、耗时调整、多任务排队互不串扰、轮询生命周期（结束即停/切换用户清理）、查询异常与任务失败严格区分、刷新恢复、身份切换隔离、上传校验（类型/大小/魔数）、小屏可用。
 
 ### 未完成 / 已知限制（如实说明）
-- **`docker compose up` 本机未实跑**：开发环境无 Docker（过程文档 04-I-1、V-008）。compose 采用标准模式，Dockerfile 内每个构建步骤（maven package、npm ci/build）与 db/init SQL 均已在本地用等效命令在真实 MySQL 8.4 上验证；若验收环境按 §3.1 启动遇到问题，可参考 §3.2 分组件运行。
+- **`docker compose up` 本机未实跑**：开发环境无 Docker（过程文档 04-I-1、V-008）。compose 采用标准模式，Dockerfile 内每个构建步骤（maven package、npm ci/build）与 db/init SQL 均已在本地用等效命令在真实 MySQL 8.4 上验证；判收前的对抗性审查又发现并修复了两处会使容器启动/反代失败的**确定性**缺陷（前端 rewrites 目标构建期烘焙 → 改 `build.args` 注入；backend 构建上下文缺 db/init → 改仓库根上下文 + `dbinit.dir` 参数化，见 V-010/V-011），修复后均已本地模拟验证。若验收环境按 §3.1 启动遇到问题，可参考 §3.2 分组件运行。
 - **重启自动恢复未实现**（题目明确范围外）：强杀进程后 PROCESSING/WAITING 任务保持原状，不自动续跑，也不会被误标为失败（已实测其表现）。扩展思路：启动时把 PROCESSING 扫回 WAITING 重入队，但需引入步骤级断点与产物幂等（结果文件可能已写入），故未做。
 - 单线程执行器（题目允许排队式）：吞吐不高，但状态语义清晰、便于观察 WAITING。
 - 任务受理幂等/断点续跑/自动重试未实现（题目允许在 README 讨论取舍，非扣分项）：幂等可基于客户端生成 `Idempotency-Key` 落库去重，本案未引入。
@@ -214,7 +214,7 @@ curl -X PUT http://localhost:3000/api/dev/sim-config -H 'Content-Type: applicati
 - 会话 Cookie（`MS_SESSION`）为未签名的用户 UUID：知道他人 UUID 可伪造其身份。这是匿名轻量身份方案的有意取舍（题目允许自选身份策略，不含真实凭据）；若需收紧可改为服务端签名 Token（HMAC）或随机不透明 Token + 服务端映射表。
 
 ### 实际投入
-- 2026-10-28 23:20 开始读题，2026-10-29 01:30 完成开发与全部验证，**约 2.2 小时**纯专注投入（含读题、前后端开发、环境受限下的本地 MySQL 攻坚、测试、浏览器实测与全部过程文档）；README 与最终整理另计约 0.5 小时。
+- 2026-10-28 23:20 开始读题，2026-10-29 02:40 完成开发、两轮验收修复与终验对抗性审查，**约 3.3 小时**纯专注投入（含读题、前后端开发、环境受限下的本地 MySQL 攻坚、测试、浏览器实测、全部过程文档，以及 R2 交互缺陷修复与 R3 两处容器构建缺陷修复）。
 
 ## 9. AI 工作流说明（如实）
 
