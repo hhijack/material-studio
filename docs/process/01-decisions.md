@@ -31,7 +31,7 @@
   - `backend/src/main/java/com/example/materialstudio/`：按 `controller / service / task(引擎) / mapper / model / config / support` 分包，单 Maven 模块。
   - `frontend/src/app/`：`page.tsx`(列表)、`templates/[id]/page.tsx`(详情)、`history/page.tsx`(历史)；`src/lib/`（api client、task store、poller）、`src/components/`。
   - `db/init/`：`01-schema.sql`、`02-seed.sql`（compose 挂到 `/docker-entrypoint-initdb.d`）。
-- **为什么**：单模块对笔试规模足够；分包让「任务引擎」独立成包便于单测（不依赖 Spring 上下文）。
+- **为什么**：单模块对项目规模足够；分包让「任务引擎」独立成包便于单测（不依赖 Spring 上下文）。
 - **放弃了什么**：多模块 Maven（过度设计）；前后端 monorepo 工具（pnpm workspace 等，没必要）。
 
 ### D-5 身份方案：匿名会话 Cookie + users 表（2026-10-28 23:35）

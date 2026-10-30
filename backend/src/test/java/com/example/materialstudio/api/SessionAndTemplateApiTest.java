@@ -39,10 +39,10 @@ class SessionAndTemplateApiTest extends BaseIntegrationTest {
         String session = Api.session(mockMvc);
         mockMvc.perform(patch("/api/session")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"nickname\":\"小影同学\"}")
+                        .content("{\"nickname\":\"星尘同学\"}")
                         .cookie(new Cookie("MS_SESSION", session)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.nickname").value("小影同学"));
+                .andExpect(jsonPath("$.nickname").value("星尘同学"));
     }
 
     @Test

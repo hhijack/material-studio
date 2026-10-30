@@ -5,7 +5,7 @@ import TopBar from "@/components/TopBar";
 
 export const metadata: Metadata = {
   title: "Material Studio · 素材制作",
-  description: "浏览模板、上传图片、提交制作任务并查看结果（校招笔试项目）",
+  description: "浏览模板、上传图片、提交制作任务并查看结果",
 };
 
 export default function RootLayout({

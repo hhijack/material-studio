@@ -15,7 +15,7 @@
   <artifactId>material-studio-backend</artifactId>
   <version>1.0.0</version>
   <name>material-studio-backend</name>
-  <description>素材制作网站后端（小影科技2027校招全栈笔试题）</description>
+  <description>素材制作网站后端</description>
 
   <properties>
     <java.version>17</java.version>
