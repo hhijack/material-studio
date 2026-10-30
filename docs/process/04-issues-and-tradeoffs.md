@@ -4,10 +4,9 @@
 
 ## 环境
 
-### I-1 本机无 Docker，`docker compose up --build` 无法在本机实跑（OPEN）
-- 影响：R-14 的 compose 配置本机无法端到端验证。
-- 缓解：compose 使用最常规的模式（mysql:8.4 官方镜像 + 标准初始化挂载 + 两个多阶段 Dockerfile），Dockerfile 内的构建步骤（maven package / npm build）在本地单独验证等效命令；db/init SQL 在本地 MariaDB 实跑验证；README 给出验收环境的一键运行与逐组件运行两种说明。
-- 残留：compose 网络编排本身未实跑验证，以 CI + 本地等效验证为准。状态：ACCEPTED（环境硬限制，题目允许记录）。
+### I-1 本机无 Docker，`docker compose up --build` 无法在本机实跑（CLOSED @ R4，2026-10-31）
+- 历史状态：OPEN——compose 本地不可验证，以"标准模式 + 等效命令验证 + 对抗性审查修复（V-010/V-011）"缓解（保留在 04-I-1 更新条目）。
+- **R4 关闭**：CI 新增 `compose-e2e` job（V-013），在 GitHub runner 的真实 Docker 环境中 `docker compose up --build` 启动三容器栈，端到端验证成功路径与失败注入——compose 编排从"配置留痕"升级为"每次 push 实跑验证"。交付限制不再存在。
 
 ### I-2 本机无 MySQL，无法直装（无 sudo）（CLOSED，方案=本地 MariaDB）
 - 影响：集成测试与 SQL 验证需要真实 DB。
@@ -17,12 +16,22 @@
 - 影响：极少数 MySQL 专有语法/行为无法在本机复现。
 - 缓解：schema 仅用双方一致的特性（BIGINT AUTO_INCREMENT、VARCHAR、DATETIME(3)、TEXT、普通索引），不使用 CTE 特性、窗口函数等方言敏感语法于关键路径；CI 在真 MySQL 8 上跑全量集成测试兜底。
 
+## R4 收尾增强轮（2026-10-31，验收质询"这些真的解决不了？"驱动）
+
+### I-10 R4 实现与取舍清单
+- **启动恢复（原 I-5）**：`app.recovery.on-startup`（默认 true），启动时 WAITING/PROCESSING 重置重跑。三步全程可重入（检查只读/生成无产物/结果覆盖写），无需步骤级断点。集成测试 2 例。生产可关。
+- **受理幂等**：`POST /api/tasks` 支持 `Idempotency-Key` 头 + `task_idempotency` 表（key 唯一）。同 key 重试返回原 taskId；**并发窗口取舍**：前置查询 + 提交后注册，同毫秒双发不去重（严格串行化需唯一约束+捕获重试），前端已防重复点击、重试场景为主，README §8 说明。
+- **Cookie HMAC 签名**：`MS_SESSION` = userId.HMAC-SHA256；伪造/错签名 401（集成测试）。secret 未配置时随机生成（重启失效），compose 给出示例值。
+- **CJK 字体**：backend 镜像内置 fonts-noto-cjk + ResultComposer.canDisplay 回退英文标题——原"方框"限制消除。
+- **compose e2e**：CI `compose-e2e` job 实跑 `docker compose up --build` + 端到端冒烟（成功路径 + 失败注入），04-I-1 关闭。
+- **保持的取舍**：单线程执行器（题目允许）；上传深度解码校验（webp 需额外解码器，魔数校验已拦声明不一致）。
+
 ## 待补问题
 
 ### I-4 上传进度条实现（CLOSED）
 - 结论：XMLHttpRequest `upload.onprogress` 实现（fetch 不支持上传进度），前端上传位显示百分比进度条；实测正常。
 
-### I-5 服务重启后任务恢复（题目明确范围外）（ACCEPTED，已实机验证其表现）
+### I-5 服务重启后任务恢复（题目明确范围外）（CLOSED @ R4——超出题目要求的加分实现）
 - 说明：进程被强杀时 WAITING/PROCESSING 任务停在原状态（实测强杀后任务保持「处理中·模拟生成」，不自动续跑也不会误标失败）；优雅关闭（SIGTERM）时 @PreDestroy 等待工作线程 10s，正在执行的任务大概率能跑完（实测一次优雅重启中任务正常完成落库）。
 - 领域扩展讨论（README 亦有）：可用「启动时把 PROCESSING 扫回 WAITING 重新入队」实现恢复，但中断步骤的幂等性（结果文件可能已写）需要引入步骤级断点，未实现。
 

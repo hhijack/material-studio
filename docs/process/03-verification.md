@@ -63,7 +63,19 @@
 - 小屏（390×760）：详情页单列布局、按钮/上传位可操作 ✅
 - 结论：✅ 前端核心行为全部实机验证；发现 1 个 bug 已修复并复验
 
-## V-008 compose 验证：未验证
+## V-012 R4 增强功能本地验证（2026-10-31 00:30~01:00）
+- 命令：`cd backend && TEST_MYSQL_URL=...33061/material_studio_test... mvn test`
+- 预期：22 例全绿（17 既有 + 恢复 2 + 幂等 2 + 伪造 Cookie 1）
+- 实际：首跑 3 失败——①测试断言过时（sessionCreateAndReuse 对比的是裸 userId，Cookie 已带 HMAC 后缀）→ 断言改为"id 相同 + cookie 带 '.' 签名后缀"；②Idempotency 测试与持久测试库残留冲突（上轮运行的 key 由旧随机用户注册 → 409）→ beforeEach 清 task_idempotency 表；③Font import 缺失 → 补。复验 **Tests run: 22, Failures: 0, BUILD SUCCESS**
+- 结论：✅ 启动恢复/受理幂等/Cookie 签名全部实机验证
+
+## V-013 CI compose-e2e 首跑（2026-10-31 17:04）
+- 触发：push 675e02b（R4）后 GitHub Actions `compose-e2e` job
+- 内容：真实 `docker compose up --build`（三容器构建+启动）→ 等待健康（≤300s）→ 经前端反代执行「会话 → 上传×2 → 受理 → 三阶段 → 结果 PNG（file 验证 PNG magic）」成功路径 → PUT 注入 SIMULATE_GENERATE 失败 → 断言 FAILED/failStage
+- 实际：**success**（约 8 分钟；Backend test / Frontend / Compose e2e 三 job 全绿）
+- 结论：✅ 04-I-1 关闭——compose 编排在真实 Docker 环境每次 push 实跑验证
+
+## V-008 compose 验证：未验证（已由 V-013 取代——见上）
 - 原因：本机无 Docker（04-I-1）。compose 配置采用的均为标准模式（mysql:8.4 官方镜像 + docker-entrypoint-initdb.d 挂载 + healthcheck + depends_on condition；backend/frontend 多阶段构建 Dockerfile，其中 maven package / npm ci / npm run build 等步骤均已在本地等效验证）。
 - 缓解：CI（GitHub Actions）含 mysql:8.4 service 的后端测试与前端四连检查，作为等效云端验证；验收方按 README「一键启动」执行 `docker compose up --build` 即可。
 

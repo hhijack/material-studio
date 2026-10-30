@@ -74,6 +74,22 @@
 - [x] R2.4 P2-3 悬挂上传中止 → AbortController + 卸载清理（2026-10-29 01:42）
 - [x] R2.5 P3 markProcessing 防御条件 + README Cookie 限制说明（2026-10-29 01:44）
 - [x] R2.6 复验：前端 lint/tsc/19 测试/build 全绿；后端 17/17；tag `acceptance-r2`（2026-10-29 01:45，V-009）
+
+### R3 对抗性审查轮（2026-10-29，判收前对抗性审查）
+- [x] R3.1 P0：Next.js standalone rewrites 构建期烘焙 → compose 前端反代失效；改为 Dockerfile 构建参数注入 + compose build.args（V-010）（2026-10-29 02:12）
+- [x] R3.2 其余对抗性检查通过：jar 名与 Dockerfile 匹配、.dockerignore、CI 触发器、素材入库、focus-visible、种子数据一致性（2026-10-29 02:12）
+- [x] R3.3 复验：构建期注入模拟实验通过；干净重建 build ✅；tag `acceptance-r3`（2026-10-29 02:15）
+- [x] R3.4 P0：backend 构建上下文缺 db/init → jar 无建表 SQL、容器启动即失败；pom `dbinit.dir` 参数化 + Dockerfile 改仓库根上下文 + compose `context: .` + 根 .dockerignore（V-011）（2026-10-29 02:35）
+- [x] R3.5 复验：注入路径 SQL 逐字节入 jar、默认路径回归、17/17 全绿（2026-10-29 02:40）
+- [x] R3.6 来源信息清理：README/过程文档/git 作者/tagger 全部去个人化（hhijack），force push + tag 重建（2026-10-30）
+
+### R4 收尾增强轮（2026-10-31，验收质询"这些真的解决不了？"驱动，详见 04-I-10）
+- [x] R4.1 启动恢复（超出题目要求）：app.recovery.on-startup，未完成任务重置重跑 + 集成测试 2 例（V-012）
+- [x] R4.2 受理幂等：Idempotency-Key 头 + task_idempotency 表 + 集成测试 2 例（V-012）
+- [x] R4.3 Cookie HMAC 签名：MS_SESSION_SECRET，伪造拒绝测试（V-012）
+- [x] R4.4 结果图 CJK 字体：容器 fonts-noto-cjk + canDisplay 回退（V-012）
+- [x] R4.5 CI compose-e2e：真实 docker compose up --build + 成功/失败注入冒烟——04-I-1 关闭（V-013）
+- [x] R4.6 复验：后端 22/22、前端四连全绿、CI 三 job 全绿（含 e2e 首跑）；tag `acceptance-r4`（2026-10-31，V-012/V-013）
 ### R3 终验对抗性审查轮（2026-10-29，判收前对抗性审查）
 - [x] R3.1 P0：Next.js standalone rewrites 构建期烘焙 → compose 前端反代失效；改为 Dockerfile 构建参数注入 + compose build.args（V-010）（2026-10-29 02:12）
 - [x] R3.2 其余对抗性检查通过：jar 名与 Dockerfile 匹配、.dockerignore、CI 触发器、素材入库、focus-visible、种子数据一致性（2026-10-29 02:12）
