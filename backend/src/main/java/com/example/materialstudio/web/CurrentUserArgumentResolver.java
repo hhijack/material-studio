@@ -1,9 +1,7 @@
 package com.example.materialstudio.web;
 
-import com.example.materialstudio.config.AppProperties;
 import com.example.materialstudio.mapper.UserMapper;
 import com.example.materialstudio.model.User;
-import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.core.MethodParameter;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
@@ -16,11 +14,11 @@ import org.springframework.web.method.support.ModelAndViewContainer;
 public class CurrentUserArgumentResolver implements HandlerMethodArgumentResolver {
 
     private final UserMapper userMapper;
-    private final String cookieName;
+    private final SessionCookies sessionCookies;
 
-    public CurrentUserArgumentResolver(UserMapper userMapper, AppProperties props) {
+    public CurrentUserArgumentResolver(UserMapper userMapper, SessionCookies sessionCookies) {
         this.userMapper = userMapper;
-        this.cookieName = props.session().cookieName();
+        this.sessionCookies = sessionCookies;
     }
 
     @Override
@@ -32,15 +30,13 @@ public class CurrentUserArgumentResolver implements HandlerMethodArgumentResolve
     @Override
     public Object resolveArgument(MethodParameter parameter, ModelAndViewContainer mavContainer,
                                   NativeWebRequest webRequest, WebDataBinderFactory binderFactory) {
-        HttpServletRequest request = webRequest.getNativeRequest(HttpServletRequest.class);
-        if (request != null && request.getCookies() != null) {
-            for (jakarta.servlet.http.Cookie cookie : request.getCookies()) {
-                if (cookieName.equals(cookie.getName())) {
-                    User user = userMapper.findById(cookie.getValue());
-                    if (user != null) {
-                        return user;
-                    }
-                }
+        // Cookie 需通过 HMAC 签名校验才算有效会话（伪造 userId 会被拒）
+        jakarta.servlet.http.HttpServletRequest request = webRequest.getNativeRequest(jakarta.servlet.http.HttpServletRequest.class);
+        String userId = request == null ? null : sessionCookies.parse(request);
+        if (userId != null) {
+            User user = userMapper.findById(userId);
+            if (user != null) {
+                return user;
             }
         }
         throw new ApiException(HttpStatus.UNAUTHORIZED, "NO_SESSION", "会话不存在或已失效，请刷新页面重建会话");

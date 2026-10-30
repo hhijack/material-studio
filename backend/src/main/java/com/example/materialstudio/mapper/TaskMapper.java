@@ -22,6 +22,12 @@ public interface TaskMapper {
     /** 仅当任务仍处于 WAITING 时置为 PROCESSING；返回受影响行数（0=已被处理，调用方应中止执行）。 */
     int markProcessing(@Param("id") String id, @Param("startedAt") LocalDateTime startedAt);
 
+    /** 启动恢复用：全部未完成任务（WAITING/PROCESSING）。 */
+    List<Task> findUnfinished();
+
+    /** 启动恢复用：任务重置为 WAITING 并清空执行痕迹。 */
+    int resetToWaiting(@Param("id") String id);
+
     void setCurrentStage(@Param("id") String id, @Param("stage") Stage stage);
 
     void markSuccess(@Param("id") String id, @Param("resultUrl") String resultUrl,

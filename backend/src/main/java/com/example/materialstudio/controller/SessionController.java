@@ -37,6 +37,7 @@ public class SessionController {
 
     @GetMapping
     public ResponseEntity<SessionResponse> get(HttpServletRequest request) {
+        // readCookie 内部做 HMAC 校验，签名无效视同无会话（新建身份）
         SessionService.SessionResult result = sessionService.getOrCreate(readCookie(request));
         ResponseEntity.BodyBuilder builder = ResponseEntity.ok();
         if (result.created()) {
@@ -61,15 +62,7 @@ public class SessionController {
     }
 
     private String readCookie(HttpServletRequest request) {
-        if (request.getCookies() == null) {
-            return null;
-        }
-        for (Cookie cookie : request.getCookies()) {
-            if (cookies.cookieName().equals(cookie.getName())) {
-                return cookie.getValue();
-            }
-        }
-        return null;
+        return cookies.parse(request);
     }
 
     private SessionResponse toResponse(User user, boolean created) {

@@ -63,6 +63,17 @@ class TaskQueryAndValidationTest extends BaseIntegrationTest {
     }
 
     @Test
+    @DisplayName("伪造的会话 Cookie（无签名/签名不符）返回 401（R4：Cookie HMAC 签名）")
+    void forgedSessionCookieRejected() throws Exception {
+        // 纯 UUID、无签名 —— 直接拒绝
+        mockMvc.perform(get("/api/tasks/mine").cookie(new Cookie("MS_SESSION", "f2442a06-9e1a-47f2-a69d-d76c46f8fc28")))
+                .andExpect(status().isUnauthorized());
+        // 带伪签名后缀 —— 同样拒绝
+        mockMvc.perform(get("/api/tasks/mine").cookie(new Cookie("MS_SESSION", "f2442a06-9e1a-47f2-a69d-d76c46f8fc28.deadbeef")))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
     @DisplayName("上传校验：类型不符 / 内容与类型不一致 / 超过大小限制")
     void uploadValidation() throws Exception {
         String session = Api.session(mockMvc);

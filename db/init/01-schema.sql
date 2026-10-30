@@ -85,3 +85,12 @@ CREATE TABLE IF NOT EXISTS `sim_config` (
     `updated_at`          DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     PRIMARY KEY (`id`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
+
+CREATE TABLE IF NOT EXISTS `task_idempotency` (
+    `idempotency_key` VARCHAR(100) NOT NULL COMMENT '客户端幂等键',
+    `user_id`         CHAR(36)     NOT NULL,
+    `task_id`         CHAR(36)     NOT NULL,
+    `created_at`      DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    PRIMARY KEY (`idempotency_key`),
+    KEY `idx_idem_user` (`user_id`)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;

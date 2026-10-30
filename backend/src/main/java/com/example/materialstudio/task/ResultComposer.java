@@ -3,6 +3,7 @@ package com.example.materialstudio.task;
 import com.example.materialstudio.model.Asset;
 import com.example.materialstudio.model.Template;
 import com.example.materialstudio.service.StorageService;
+import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.geom.RoundRectangle2D;
@@ -61,13 +62,17 @@ public class ResultComposer {
             g.draw(new RoundRectangle2D.Float(photoX - 4, photoY - 4, photoW + 8, photoH + 8, 18, 18));
 
             try {
+                Font titleFont = resolveTitleFont();
                 g.setColor(java.awt.Color.WHITE);
-                g.setFont(g.getFont().deriveFont(java.awt.Font.BOLD, 34f));
-                g.drawString(template.title(), photoX, photoY + photoH + 56);
                 g.setFont(g.getFont().deriveFont(java.awt.Font.PLAIN, 18f));
                 g.setColor(new java.awt.Color(255, 255, 255, 200));
                 g.drawString("Material Studio simulated result", photoX, photoY + photoH + 86);
                 g.drawString(TS.format(LocalDateTime.now()), photoX + photoW - 180, photoY + photoH + 56);
+                if (titleFont != null) {
+                    g.setFont(titleFont.deriveFont(java.awt.Font.BOLD, 34f));
+                    g.setColor(java.awt.Color.WHITE);
+                    g.drawString(template.title(), photoX, photoY + photoH + 56);
+                }
             } catch (Exception fontError) {
                 // 容器缺字体时跳过文案，保证结果图仍能产出
             }
@@ -98,6 +103,24 @@ public class ResultComposer {
 
     private byte[] readAllBytes(java.nio.file.Path path) throws IOException {
         return java.nio.file.Files.readAllBytes(path);
+    }
+
+    /**
+     * 选择能渲染中文的字体：优先常见 CJK 字体；全部缺失时返回 null（调用方改用英文标题），
+     * 避免容器缺 CJK 字体时中文画成方框。容器镜像已内置 fonts-noto-cjk，正常返回非 null。
+     */
+    private Font resolveTitleFont() {
+        String sample = "中文渲染测试";
+        String[] preferred = {"Noto Sans CJK SC", "Noto Sans CJK JP", "Noto Sans CJK",
+                "WenQuanYi Zen Hei", "Source Han Sans SC", "Microsoft YaHei", "PingFang SC"};
+        for (String name : preferred) {
+            Font candidate = new Font(name, Font.PLAIN, 12);
+            if (candidate.canDisplayUpTo(sample) == -1) {
+                return candidate;
+            }
+        }
+        Font logical = new Font(Font.SANS_SERIF, Font.PLAIN, 12);
+        return logical.canDisplayUpTo(sample) == -1 ? logical : null;
     }
 
     /** 等比裁剪为 cover 填充目标尺寸。 */

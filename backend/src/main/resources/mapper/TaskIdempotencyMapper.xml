@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.materialstudio.mapper.TaskIdempotencyMapper">
+
+    <select id="findTaskIdByKey" resultType="string">
+        SELECT task_id
+        FROM task_idempotency
+        WHERE idempotency_key = #{key}
+    </select>
+
+    <insert id="insert">
+        INSERT INTO task_idempotency (idempotency_key, user_id, task_id)
+        VALUES (#{key}, #{userId}, #{taskId})
+    </insert>
+</mapper>

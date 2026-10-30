@@ -24,9 +24,12 @@ class SessionAndTemplateApiTest extends BaseIntegrationTest {
         Cookie cookie = first.getResponse().getCookie("MS_SESSION");
         assertThat(cookie).isNotNull();
 
-        // 带 Cookie 再次访问：复用同一用户，不新建
+        // 带 Cookie 再次访问：复用同一用户，不新建（R4：Cookie 值带 HMAC 签名后缀，响应体仍返回裸 userId）
         MvcResult second = mockMvc.perform(get("/api/session").cookie(cookie)).andExpect(status().isOk()).andReturn();
-        assertThat(second.getResponse().getContentAsString()).contains(cookie.getValue());
+        String firstId = Api.json().readTree(first.getResponse().getContentAsString()).path("id").asText();
+        String secondBody = second.getResponse().getContentAsString();
+        assertThat(secondBody).contains(firstId);
+        assertThat(cookie.getValue()).startsWith(firstId + ".").isNotEqualTo(firstId); // 签名后缀生效
 
         // 不带 Cookie 的全新访问会得到新身份（用于演示隔离）
         MvcResult fresh = mockMvc.perform(get("/api/session")).andExpect(status().isOk()).andReturn();

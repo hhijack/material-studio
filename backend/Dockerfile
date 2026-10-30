@@ -16,8 +16,9 @@ RUN mvn -q -B package -DskipTests -Ddbinit.dir=/build/db-init
 
 # ---- 运行阶段 ----
 FROM eclipse-temurin:17-jre-jammy
+# fonts-noto-cjk：结果图中文文案渲染（极端缺字体时 ResultComposer 自动降级英文标题）
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends curl \
+    && apt-get install -y --no-install-recommends curl fonts-noto-cjk \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app

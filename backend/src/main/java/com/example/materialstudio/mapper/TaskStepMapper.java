@@ -23,4 +23,7 @@ public interface TaskStepMapper {
 
     void markFailed(@Param("taskId") String taskId, @Param("stage") Stage stage,
                     @Param("message") String message, @Param("finishedAt") LocalDateTime finishedAt);
+
+    /** 启动恢复用：任务全部步骤重置为 PENDING 并清空执行痕迹。 */
+    int resetByTaskId(@Param("taskId") String taskId);
 }

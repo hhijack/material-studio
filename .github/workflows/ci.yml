@@ -58,3 +58,62 @@ jobs:
       - name: Package
         working-directory: backend
         run: mvn -B package -DskipTests
+
+  compose-e2e:
+    name: Compose end-to-end (docker compose up --build)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and start the full stack (frontend + backend + MySQL)
+        run: docker compose up -d --build
+      - name: Wait until the stack is healthy
+        run: |
+          ok=0
+          for i in $(seq 1 60); do
+            if curl -fsS http://127.0.0.1:8080/api/health 2>/dev/null | grep -q UP \
+               && curl -fsS http://127.0.0.1:3000/api/templates 2>/dev/null | grep -q travel-postcard; then
+              ok=1; break
+            fi
+            sleep 5
+          done
+          if [ "$ok" != "1" ]; then
+            echo "::error::stack not healthy within 300s"
+            docker compose ps || true
+            docker compose logs --tail=80 mysql backend frontend || true
+            exit 1
+          fi
+          echo "stack healthy"
+      - name: E2E success path + injected failure (through the Next.js proxy)
+        run: |
+          set -e
+          B=http://127.0.0.1:3000
+          printf 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==' | base64 -d > /tmp/a.png
+          cp /tmp/a.png /tmp/b.png
+          curl -fsS -c /tmp/cookie.txt "$B/api/session" >/dev/null
+          A1=$(curl -fsS -b /tmp/cookie.txt -F templateId=travel-postcard -F "file=@/tmp/a.png;type=image/png" "$B/api/uploads" | python3 -c 'import sys,json;print(json.load(sys.stdin)["id"])')
+          A2=$(curl -fsS -b /tmp/cookie.txt -F templateId=travel-postcard -F "file=@/tmp/b.png;type=image/png" "$B/api/uploads" | python3 -c 'import sys,json;print(json.load(sys.stdin)["id"])')
+          T=$(curl -fsS -b /tmp/cookie.txt -H 'Content-Type: application/json' -d "{\"templateId\":\"travel-postcard\",\"assetIds\":[\"$A1\",\"$A2\"]}" "$B/api/tasks" | python3 -c 'import sys,json;print(json.load(sys.stdin)["taskId"])')
+          echo "taskId=$T"
+          ST=""
+          for i in $(seq 1 60); do
+            ST=$(curl -fsS -b /tmp/cookie.txt "$B/api/tasks/$T" | python3 -c 'import sys,json;print(json.load(sys.stdin)["task"]["status"])')
+            [ "$ST" = "SUCCESS" ] && break
+            [ "$ST" = "FAILED" ] && break
+            sleep 2
+          done
+          [ "$ST" = "SUCCESS" ] || { echo "::error::success path not reached: $ST"; exit 1; }
+          curl -fsS -b /tmp/cookie.txt "http://127.0.0.1:8080/api/files/results/$T.png" -o /tmp/result.png
+          file /tmp/result.png | grep -qi 'PNG' || { echo "::error::result not PNG"; exit 1; }
+          echo "success path + result preview OK"
+          curl -fsS -X PUT "$B/api/dev/sim-config" -H 'Content-Type: application/json' \
+            -d '{"materialCheckMs":200,"simulateGenerateMs":200,"resultFinalizeMs":200,"failStage":"SIMULATE_GENERATE"}' >/dev/null
+          T2=$(curl -fsS -b /tmp/cookie.txt -H 'Content-Type: application/json' -d "{\"templateId\":\"travel-postcard\",\"assetIds\":[\"$A1\",\"$A2\"]}" "$B/api/tasks" | python3 -c 'import sys,json;print(json.load(sys.stdin)["taskId"])')
+          ST2=""
+          for i in $(seq 1 60); do
+            J=$(curl -fsS -b /tmp/cookie.txt "$B/api/tasks/$T2")
+            ST2=$(echo "$J" | python3 -c 'import sys,json;d=json.load(sys.stdin)["task"];print(d["status"]+"/"+str(d["failStage"]))')
+            case "$ST2" in FAILED/SIMULATE_GENERATE) break;; esac
+            sleep 2
+          done
+          [ "$ST2" = "FAILED/SIMULATE_GENERATE" ] || { echo "::error::injected failure not observed: $ST2"; exit 1; }
+          echo "injected failure OK"

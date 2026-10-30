@@ -35,6 +35,9 @@ services:
       SIM_SIMULATE_GENERATE_MS: 4000
       SIM_RESULT_FINALIZE_MS: 2500
       TASK_EXECUTION_MODE: async
+      # 会话 Cookie 签名密钥示例（无真实凭据；生产请替换并妥善保管）
+      MS_SESSION_SECRET: change-me-example-secret-please-rotate
+      APP_RECOVERY_ON_STARTUP: "true"
     volumes:
       - app-data:/app/data
     depends_on:

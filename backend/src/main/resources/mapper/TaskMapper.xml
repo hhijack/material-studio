@@ -35,6 +35,21 @@
         ORDER BY t.created_at DESC, t.id DESC
     </select>
 
+    <select id="findUnfinished" resultType="com.example.materialstudio.model.Task">
+        SELECT id, user_id, template_id, status, current_stage,
+               fail_stage, fail_reason, result_url, created_at, started_at, finished_at
+        FROM task
+        WHERE status IN ('WAITING', 'PROCESSING')
+        ORDER BY created_at
+    </select>
+
+    <update id="resetToWaiting">
+        UPDATE task
+        SET status = 'WAITING', current_stage = NULL, fail_stage = NULL,
+            fail_reason = NULL, result_url = NULL, started_at = NULL, finished_at = NULL
+        WHERE id = #{id}
+    </update>
+
     <update id="markProcessing">
         UPDATE task
         SET status     = 'PROCESSING',

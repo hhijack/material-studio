@@ -37,8 +37,14 @@ app:
   session:
     cookie-name: MS_SESSION
     max-age-seconds: 15552000 # 180 天
+    # 会话 Cookie 的 HMAC 签名密钥（Cookie 值 = userId.HMAC）。未配置时启动随机生成（重启后既有会话失效）；
+    # compose/生产请显式设置 MS_SESSION_SECRET 示例值。
+    secret: ${MS_SESSION_SECRET:}
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://127.0.0.1:3000}
+  recovery:
+    # 启动时把 WAITING/PROCESSING 未完成任务重置重跑（R4 新增；生产可置 false 关闭）
+    on-startup: ${APP_RECOVERY_ON_STARTUP:true}
 
 sim:
   material-check-ms: ${SIM_MATERIAL_CHECK_MS:2000}

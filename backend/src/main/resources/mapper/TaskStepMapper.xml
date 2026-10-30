@@ -44,4 +44,10 @@
         WHERE task_id = #{taskId}
           AND stage = #{stage}
     </update>
+
+    <update id="resetByTaskId">
+        UPDATE task_step
+        SET status = 'PENDING', message = NULL, started_at = NULL, finished_at = NULL
+        WHERE task_id = #{taskId}
+    </update>
 </mapper>

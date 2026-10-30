@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -33,8 +34,9 @@ public class TaskController {
     }
 
     @PostMapping("/tasks")
-    public CreateTaskResponse create(@CurrentUser User user, @Valid @RequestBody CreateTaskRequest request) {
-        return new CreateTaskResponse(taskService.create(user, request.templateId(), request.assetIds()).taskId());
+    public CreateTaskResponse create(@CurrentUser User user, @Valid @RequestBody CreateTaskRequest request,
+                                     @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey) {
+        return new CreateTaskResponse(taskService.create(user, request.templateId(), request.assetIds(), idempotencyKey).taskId());
     }
 
     @GetMapping("/tasks/mine")
