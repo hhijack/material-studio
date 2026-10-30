@@ -2,7 +2,7 @@
 
 项目实现「浏览模板 → 上传图片 → 提交制作任务 → 后台多步骤异步处理 → 查看结果与历史」的完整业务闭环。制作不调用真实 AI，使用**可调耗时、可注入指定阶段失败**的模拟生成器；重点是 Java 后端的多步骤异步处理与前端异步状态管理。
 
-- **验收 commit**：见仓库 tag `acceptance-r3`（`git rev-parse acceptance-r3`；首轮 `acceptance`、二轮 `acceptance-r2` 保留备查）。
+- **验收 commit**：见仓库 tag `acceptance-r4`（`git rev-parse acceptance-r4`；历史 tag `acceptance` / `acceptance-r2` / `acceptance-r3` 保留备查）。
 - **过程文档**：`docs/process/`（计划/决策/进度/验证/问题/需求追溯六份，全程边做边记）。
 
 ---
